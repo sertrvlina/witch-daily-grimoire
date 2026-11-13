@@ -1,0 +1,15 @@
+THE WITCH'S DAILY GRIMOIRE
+
+Contenuto:
+- index.html: planner
+- manifest.webmanifest e sw.js: installazione PWA e cache offline
+- icon-192.png / icon-512.png: icone
+
+IMPORTANTE:
+Per installare una PWA su iPhone, i file devono essere pubblicati su un indirizzo HTTPS.
+Il planner salva i dati localmente nel database IndexedDB di Safari, non su un server.
+Non cancellare i dati/siti web di Safari e fai periodicamente un Backup completo.
+Per installare: apri l'indirizzo in Safari > Condividi > Aggiungi alla schermata Home.
+
+Il font decorativo usa Google Fonts quando c'è connessione; il planner funziona anche senza,
+con font di riserva. Il service worker memorizza i file dell'app per l'uso offline dopo il primo caricamento.
