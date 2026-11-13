@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171316">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Grimoire">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>The Witch's Daily Grimoire</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IM+Fell+English:ital@0;1&family=Montserrat:wght@300;400;500&display=swap');
+:root{--bg:#171316;--panel:#211b20;--panel2:#292128;--ink:#eee5dc;--muted:#b5a4aa;--wine:#754653;--gold:#b99b69;--line:#59434c;--green:#89917a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#30232b 0,#171316 58%);color:var(--ink);font-family:Montserrat, sans-serif;font-size:13px;line-height:1.55}
+main{max-width:900px;margin:auto;padding:24px 16px 70px}.hero{text-align:center;padding:30px 12px 24px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.kicker{letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-size:10px}.hero h1{font:500 clamp(32px,7vw,54px) 'IM Fell English',serif;letter-spacing:1px;margin:12px 0 3px}.sub{font:italic 18px 'Cormorant Garamond',serif;color:var(--muted)}
+.orn{color:var(--gold);letter-spacing:8px;margin:12px 0}.topline{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:18px}
+input,textarea,select,button{font:inherit;color:var(--ink)}input,textarea,select{background:#171316;border:1px solid var(--line);border-radius:7px;padding:9px;width:100%;outline:none}input:focus,textarea:focus,select:focus{border-color:var(--gold)}button{border:1px solid var(--line);background:#33252e;padding:9px 13px;border-radius:7px;cursor:pointer}button:hover{border-color:var(--gold)}button.primary{background:var(--wine);border-color:#966b76}button.danger{color:#d9a6a6}.date{width:auto}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.panel{background:linear-gradient(145deg,#251e24,#1e191e);border:1px solid var(--line);border-radius:11px;padding:16px;box-shadow:0 12px 30px #0003}.wide{grid-column:1/-1}.panel h2{font:600 25px 'Cormorant Garamond',serif;color:var(--gold);margin:0 0 12px}.panel h3{font:600 19px 'Cormorant Garamond',serif;margin:12px 0 7px;color:#e5d5c5}.muted{color:var(--muted)}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row input{flex:1}.item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #493640}.item:last-child{border:0}.item span{flex:1}.item.done span{text-decoration:line-through;color:var(--muted)}.item button{padding:4px 7px;font-size:11px}.check{accent-color:var(--gold);width:16px;height:16px}.tiny{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}.field{margin:8px 0}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.task{padding:10px 0;border-bottom:1px solid #493640}.taskhead{display:flex;gap:8px;align-items:center}.taskhead strong{flex:1;font:600 18px 'Cormorant Garamond',serif}.taskmeta{font-size:10px;color:var(--muted);margin-left:25px}.addline{display:flex;gap:7px;margin-top:10px}.addline input{flex:1}.addline button{white-space:nowrap}.progress{height:6px;background:#44343d;border-radius:20px;overflow:hidden;margin:10px 0}.progress b{display:block;height:100%;background:linear-gradient(90deg,var(--wine),var(--gold));width:0}.quote{font:italic 21px 'Cormorant Garamond',serif;color:#d9c6b4;text-align:center;padding:4px 12px 12px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.status{font-size:11px;color:var(--green);text-align:center;margin-top:12px}.footer{text-align:center;color:var(--muted);font:italic 17px 'Cormorant Garamond',serif;margin:28px 0}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}main{padding:12px 12px 45px}.panel{padding:14px}.hero{padding-top:22px}}
+</style>
+</head>
+<body><main>
+<header class="hero">
+<div class="kicker">✦ a personal book of days ✦</div>
+<h1>The Witch's Daily Grimoire</h1>
+<div class="sub">Rituals, intentions & little victories</div>
+<div class="orn">☽ ✧ ☾</div>
+<div class="topline"><input class="date" type="date" id="date"><span class="muted" id="weekday"></span></div>
+</header>
+<div class="quote" id="quote">“Even the smallest ritual can make a day feel like your own.”</div>
+<div class="grid">
+<section class="panel"><h2>✧ Intenzione del giorno</h2><textarea id="intention" rows="3" placeholder="Che energia voglio portare in questa giornata?"></textarea></section>
+<section class="panel"><h2>☽ Il mio umore</h2><select id="mood"><option value="">Scegli come ti senti…</option><option>Serena</option><option>Felice</option><option>Motivata</option><option>Stanca</option><option>Ansiosa</option><option>Triste</option><option>Confusa</option><option>Neutra</option></select><div class="field"><label>Una parola per oggi</label><input id="moodnote" placeholder="…"></div></section>
+<section class="panel"><h2>🕯 Rituali quotidiani</h2><div class="tiny">Piccoli gesti, senza perfezionismo</div><div id="habits"></div><div class="addline"><input id="newhabit" placeholder="Aggiungi un rituale"><button onclick="addHabit()">＋</button></div></section>
+<section class="panel"><h2>✦ Cura di me</h2><div id="trackers"></div></section>
+<section class="panel wide"><h2>📜 Le cose da fare</h2><div class="muted">Aggiungi solo ciò che vuoi davvero fare. Gli orari sono facoltativi.</div><div id="tasks"></div>
+<div class="field"><label>Nuova attività</label><input id="taskname" placeholder="Es. esercitarmi con la chitarra"></div>
+<div class="row"><select id="taskcat"><option>Personale</option><option>Studio</option><option>Lettura</option><option>Inglese</option><option>Occulto</option><option>Chitarra</option><option>Disegno</option><option>Cura personale</option><option>Casa e commissioni</option><option>Tempo libero</option></select><select id="period"><option>Quando capita</option><option>Mattina</option><option>Tarda mattinata</option><option>Pranzo</option><option>Pomeriggio</option><option>Sera</option><option>Notte</option></select><input id="tasktime" type="time" style="max-width:115px"><button class="primary" onclick="addTask()">Aggiungi</button></div></section>
+<section class="panel wide"><h2>🌙 Diario delle ombre e delle luci</h2><textarea id="journal" rows="5" placeholder="Scrivi liberamente. Non deve essere perfetto, deve essere tuo."></textarea></section>
+<section class="panel wide"><h2>✧ Bilancio della giornata</h2><textarea id="reflection" rows="3" placeholder="Cosa è andato bene? Cosa voglio lasciare andare?"></textarea><div class="progress"><b id="bar"></b></div><div class="muted" id="progressText">0 attività completate</div></section>
+</div>
+<div class="actions"><button class="primary" onclick="exportDay()">⇩ Esporta backup (.json)</button><button onclick="copyDay()">Copia riepilogo</button><button onclick="resetDay()">Reset giornata</button><button onclick="backupAll()">Backup completo</button><label class="row" style="border:1px solid var(--line);padding:8px 12px;border-radius:7px;cursor:pointer">Importa backup<input type="file" accept=".json,application/json" id="importFile" style="display:none" onchange="importBackup(event)"></label></div>
+<div class="status" id="status">✧ Salvataggio locale attivo su questo dispositivo ✧</div>
+<div class="footer">“Per aspera ad astra” · Through darkness, toward the stars</div>
+</main>
+<script>
+const DB='witchGrimoireDB', STORE='days'; let db;
+const defaults=['Bere acqua','Fare colazione','Lavarmi e vestirmi','Prendere le mie cose / prepararmi','Un momento per me','Routine serale'];
+const trackerNames=['Acqua','Pasti','Movimento','Lettura','Studio','Meditazione','Cura personale','Sonno'];
+let current='',data={};
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE,{keyPath:'date'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function getDay(date){return new Promise(res=>{let r=db.transaction(STORE).objectStore(STORE).get(date);r.onsuccess=()=>res(r.result||{date,habits:defaults.map(x=>({name:x,done:false})),trackers:{},tasks:[],intention:'',mood:'',moodnote:'',journal:'',reflection:''})})}
+function save(){if(!db)return;data.date=current;let tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(structuredClone(data));document.getElementById('status').textContent='✧ Salvato su questo iPhone · '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
+function bind(id,key){let el=document.getElementById(id);el.value=data[key]||'';el.oninput=()=>{data[key]=el.value;save()}}
+function render(){document.getElementById('weekday').textContent=new Date(current+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long'});bind('intention','intention');bind('mood','mood');bind('moodnote','moodnote');bind('journal','journal');bind('reflection','reflection');renderHabits();renderTrackers();renderTasks();progress()}
+function renderHabits(){let root=document.getElementById('habits');root.innerHTML='';data.habits.forEach((h,i)=>{let d=document.createElement('div');d.className='item'+(h.done?' done':'');d.innerHTML=`<input class="check" type="checkbox" ${h.done?'checked':''}><span></span><button>✎</button><button class="danger">×</button>`;d.querySelector('span').textContent=h.name;d.querySelector('input').onchange=e=>{h.done=e.target.checked;save();renderHabits();progress()};d.querySelectorAll('button')[0].onclick=()=>{let n=prompt('Modifica rituale',h.name);if(n?.trim()){h.name=n.trim();save();renderHabits()}};d.querySelectorAll('button')[1].onclick=()=>{data.habits.splice(i,1);save();renderHabits();progress()};root.append(d)})}
+function addHabit(){let el=document.getElementById('newhabit');if(el.value.trim()){data.habits.push({name:el.value.trim(),done:false});el.value='';save();renderHabits();progress()}}
+function renderTrackers(){let root=document.getElementById('trackers');root.innerHTML='';trackerNames.forEach(n=>{let d=document.createElement('div');d.className='item';let c=document.createElement('input');c.type='checkbox';c.className='check';c.checked=!!data.trackers[n];c.onchange=()=>{data.trackers[n]=c.checked;save()};let s=document.createElement('span');s.textContent=n;d.append(c,s);root.append(d)})}
+function renderTasks(){let root=document.getElementById('tasks');root.innerHTML='';data.tasks.forEach((t,i)=>{let d=document.createElement('div');d.className='task';d.innerHTML=`<div class="taskhead"><input class="check" type="checkbox" ${t.done?'checked':''}><strong></strong><button>✎</button><button class="danger">×</button></div><div class="taskmeta"></div>`;d.querySelector('strong').textContent=t.name;d.querySelector('.taskmeta').textContent=[t.category,t.period,t.time].filter(Boolean).join(' · ');d.querySelector('input').onchange=e=>{t.done=e.target.checked;save();renderTasks();progress()};d.querySelectorAll('button')[0].onclick=()=>{let n=prompt('Modifica attività',t.name);if(n?.trim()){t.name=n.trim();save();renderTasks()}};d.querySelectorAll('button')[1].onclick=()=>{data.tasks.splice(i,1);save();renderTasks();progress()};root.append(d)})}
+function addTask(){let n=document.getElementById('taskname');if(!n.value.trim())return;data.tasks.push({name:n.value.trim(),category:taskcat.value,period:period.value,time:tasktime.value,done:false});n.value='';tasktime.value='';save();renderTasks();progress()}
+function progress(){let all=[...data.habits,...data.tasks],done=all.filter(x=>x.done).length;document.getElementById('bar').style.width=(all.length?done/all.length*100:0)+'%';document.getElementById('progressText').textContent=`${done} di ${all.length} attività completate`}
+function summary(){return `THE WITCH'S DAILY GRIMOIRE\n${current}\n\nINTENZIONE\n${data.intention}\n\nUMORE\n${data.mood} ${data.moodnote}\n\nRITUALI\n${data.habits.map(x=>(x.done?'☑ ':'☐ ')+x.name).join('\n')}\n\nATTIVITÀ\n${data.tasks.map(x=>(x.done?'☑ ':'☐ ')+x.name+' · '+[x.category,x.period,x.time].filter(Boolean).join(' / ')).join('\n')}\n\nTRACKER\n${trackerNames.map(x=>(data.trackers[x]?'☑ ':'☐ ')+x).join('\n')}\n\nDIARIO\n${data.journal}\n\nBILANCIO\n${data.reflection}`}
+function download(name,content,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function exportDay(){download('Grimorio-'+current+'.json',JSON.stringify(data,null,2),'application/json')}
+function backupAll(){let r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>download('Backup-Grimorio.json',JSON.stringify(r.result,null,2),'application/json')}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let v=JSON.parse(r.result),items=Array.isArray(v)?v:[v];let tx=db.transaction(STORE,'readwrite');items.forEach(x=>tx.objectStore(STORE).put(x));tx.oncomplete=()=>load(current)}catch{alert('File non valido')}};r.readAsText(f)}
+function copyDay(){let s=summary();if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(()=>alert('Riepilogo copiato'));else{let t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();alert('Riepilogo copiato')}}
+async function resetDay(){if(!confirm('Vuoi azzerare i dati di questa giornata?'))return;let tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(current);await new Promise(r=>tx.oncomplete=r);await load(current)}
+async function load(date){current=date;document.getElementById('date').value=date;data=await getDay(date);render()}
+document.getElementById('date').onchange=e=>load(e.target.value);
+(async()=>{await openDB();let d=new Date();let local=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);await load(local);if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});})();
+</script></body></html>
