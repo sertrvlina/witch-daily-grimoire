@@ -85,6 +85,34 @@ export default {
       });
     }
     if (request.method === "GET") {
+      if (new URL(request.url).searchParams.get("test") === "chat") {
+        if (!env.AI || typeof env.AI.run !== "function") {
+          return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
+        }
+        try {
+          const result = await env.AI.run(MODEL, {
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: "Rispondi in italiano con una sola frase breve: conferma che puoi assistermi." }
+            ],
+            max_tokens: 256,
+            temperature: 0.2,
+            chat_template_kwargs: { enable_thinking: false }
+          });
+          const reply = extractReply(result);
+          if (!reply) {
+            return json({
+              status: "error",
+              stage: "chat_model_response",
+              finish_reason: result?.choices?.[0]?.finish_reason || null,
+              message: "Il modello non ha restituito testo finale usando il prompt completo."
+            }, 502);
+          }
+          return json({ status: "online", service: "The Oracle", aiBinding: true, chatTest: "passed", reply }, 200);
+        } catch (error) {
+          return json({ status: "error", stage: "chat_workers_ai", message: String(error?.message || error) }, 502);
+        }
+      }
       if (new URL(request.url).searchParams.get("test") === "1") {
         if (!env.AI || typeof env.AI.run !== "function") {
           return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
