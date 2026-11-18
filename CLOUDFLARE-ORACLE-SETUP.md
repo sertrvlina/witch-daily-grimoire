@@ -9,6 +9,7 @@ Il Worker è definito in `cloudflare-worker.js` e usa il binding Workers AI deno
 Il repository è collegato a Cloudflare Workers Builds. Le modifiche salvate sul branch `main` sono destinate al deploy automatico tramite la build collegata. Non sostituire manualmente il Worker con una versione precedente: si rischia di annullare le funzioni più recenti. Un commit GitHub conferma il salvataggio del codice, non da solo il completamento del deploy Cloudflare.
 
 ## Piano gratuito: regola obbligatoria
+Il Worker non espone più endpoint GET di test che consumano AI: il controllo pubblico di stato verifica soltanto la build e il binding, senza eseguire inferenze.
 - Mantenere Cloudflare Workers sul piano **Free**.
 - Non attivare Workers Paid, non aggiungere crediti prepagati e non configurare servizi a pagamento.
 - Workers AI sul piano Free dispone di una quota gratuita giornaliera di 10.000 Neurons. La quota si rinnova ogni giorno alle 00:00 UTC.
@@ -17,8 +18,8 @@ Il repository è collegato a Cloudflare Workers Builds. Le modifiche salvate sul
 
 ## Consumo indicativo immagini
 Il modello usato è `@cf/black-forest-labs/flux-2-klein-4b`.
-- Risultato 512 × 512: circa 31,42 Neurons per immagine (input e output).
-- Risultato 1024 × 1024: circa 109,57 Neurons per immagine (input e output).
+- Risultato 512 × 512: circa 31,45 Neurons per immagine (input e output).
+- Risultato 1024 × 1024: circa 109,73 Neurons per immagine (input e output).
 - Lo studio immagini seleziona 512 × 512 come impostazione predefinita per contenere il consumo.
 - Le stime sono indicative e non includono il consumo di chat o altre funzioni.
 
