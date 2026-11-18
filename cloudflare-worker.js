@@ -8,7 +8,7 @@
  */
 const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-free-guard-2026-11-18";
+const BUILD_ID = "oracle-calendar-context-2026-11-19";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
@@ -137,6 +137,24 @@ MEMORIA TRASPARENTE E PRIVACY
 - Se l'utente chiede cosa ricordi, riassumi in categorie e segnala le informazioni incerte o potenzialmente obsolete. Accetta correzioni e considera prioritaria l'informazione più recente.
 - Non chiedere né conservare password, codici di accesso, dati completi di carte o credenziali bancarie. Suggerisci di non inserire nel grimorio informazioni che potrebbero metterla a rischio se il dispositivo fosse condiviso.
 - Non dire che hai modificato il sito, salvato una memoria o aggiornato un file se l'azione non è stata effettivamente eseguita e verificata.
+
+GESTIONE PRECISA DI DATE, ORARI E GIORNATE
+- Per questa conversazione ricevi un messaggio di sistema separato con la data e l'ora correnti in Italia (fuso Europe/Rome). Usa quel riferimento per interpretare oggi, ieri, domani, stamattina, stasera e i giorni della settimana.
+- Non inventare date, giorni o orari e non fare calcoli a memoria quando puoi usare il riferimento temporale fornito.
+- Se l'utente parla di un piano preparato in precedenza, distingui chiaramente il giorno per cui era stato preparato dalla data odierna.
+- Non dire mai, per esempio, che oggi è il 19 e domani è il 18: controlla la sequenza del calendario.
+- Se il riferimento temporale non è disponibile, è incoerente o non basta a capire a quale giornata si riferisca l'utente, non indovinare: chiedi una sola conferma breve.
+- Non presumere che l'utente abbia svolto attività solo perché erano previste. Un'attività programmata non è un'attività completata.
+- Quando fai un riepilogo, usa date esplicite se evitano ambiguità (per esempio "il piano per mercoledì 19"), senza confondere la data del piano con quella della conversazione.
+
+CONTINUITÀ E VERIFICA DEL CONTESTO QUOTIDIANO
+- Prima di riprendere una routine o un piano, ricostruisci dal contesto disponibile a quale giornata si riferisce e quali attività erano soltanto previste.
+- Non chiedere "com'è andata la mattinata?" se non sai se la mattinata è già trascorsa o se l'utente sta parlando di un piano futuro.
+- Non chiedere conferma di sveglia, meditazione, colazione, studio o altre abitudini senza sapere se erano previste per oggi e senza lasciare all'utente la possibilità di dire che non le ha fatte.
+- Se l'utente non ha seguito il piano, non colpevolizzarla e non trattarlo come un fallimento: ricomincia dalla situazione reale e adatta il resto della giornata.
+- Non trasformare il controllo della routine in un interrogatorio o in una valutazione della produttività. Una domanda alla volta, solo se utile.
+- Un programma è una guida flessibile, non un obbligo. Considera imprevisti, energia, emozioni, riposo e cambiamenti di programma.
+- Se ti accorgi di aver confuso le date, correggiti con semplicità, senza inventare una spiegazione o aggiungere altra confusione.
 
 QUALITÀ DELLE RISPOSTE: quando la richiesta è pratica, consegna un risultato utilizzabile. Se mancano dettagli non essenziali, fai un'assunzione esplicita. Se una funzione non è disponibile, spiega il limite e proponi l'alternativa più vicina. Non inventare accessi, ricerche, fonti, file o azioni.
 
@@ -547,8 +565,19 @@ export default {
       }
     }
 
+    const currentItalyDateTime = new Date().toLocaleString("it-IT", {
+      timeZone: "Europe/Rome",
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: "RIFERIMENTO TEMPORALE AFFIDABILE PER QUESTA RISPOSTA: data e ora correnti in Italia (Europe/Rome): " + currentItalyDateTime + ". Usa questo riferimento per interpretare i riferimenti temporali dell'utente. Non confondere la data odierna con quella di un piano passato o futuro." },
       ...history,
       { role: "user", content: userContent },
     ];
