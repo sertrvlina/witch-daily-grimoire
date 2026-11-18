@@ -62,8 +62,9 @@ export default {
               { role: "system", content: "Rispondi in italiano con una sola frase breve. Non mostrare ragionamenti o passaggi interni." },
               { role: "user", content: "Scrivi soltanto: Il collegamento AI funziona." }
             ],
-            max_tokens: 512,
-            temperature: 0.2
+            max_tokens: 1024,
+            temperature: 0.2,
+            chat_template_kwargs: { enable_thinking: false }
           });
           const reply = extractReply(result);
           if (!reply) {
@@ -121,8 +122,9 @@ export default {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
-        max_tokens: 256,
+        max_tokens: 1024,
         temperature: 0.2,
+        chat_template_kwargs: { enable_thinking: false },
       });
       const reply = extractReply(result);
       if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale.", stage: "empty_model_reply", finish_reason: result?.choices?.[0]?.finish_reason || null }, 502);
