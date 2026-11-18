@@ -40,6 +40,13 @@ function json(data, status) {
   });
 }
 
+function extractReply(result) {
+  if (typeof result?.response === "string" && result.response.trim()) return result.response.trim();
+  const content = result?.choices?.[0]?.message?.content;
+  if (typeof content === "string" && content.trim()) return content.trim();
+  return "";
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -61,18 +68,21 @@ export default {
         try {
           const result = await env.AI.run(MODEL, {
             messages: [
-              { role: "system", content: "Rispondi in italiano con una sola frase breve." },
-              { role: "user", content: "Conferma che il collegamento AI funziona." }
+              { role: "system", content: "Rispondi in italiano con una sola frase breve. Non mostrare ragionamenti o passaggi interni." },
+              { role: "user", content: "Scrivi soltanto: Il collegamento AI funziona." }
             ],
-            max_tokens: 80,
+            max_tokens: 512,
             temperature: 0.2
           });
-          const reply = typeof result?.response === "string"
-            ? result.response
-            : typeof result?.choices?.[0]?.message?.content === "string"
-              ? result.choices[0].message.content
-              : "";
-          if (!reply) return json({ status: "error", stage: "model_response", result }, 502);
+          const reply = extractReply(result);
+          if (!reply) {
+            return json({
+              status: "error",
+              stage: "model_response",
+              finish_reason: result?.choices?.[0]?.finish_reason || null,
+              message: "Il modello è stato raggiunto ma non ha restituito testo finale. Il test verrà riprovato con un limite maggiore.",
+            }, 502);
+          }
           return json({ status: "online", service: "The Oracle", aiBinding: true, aiTest: "passed", reply }, 200);
         } catch (error) {
           return json({ status: "error", stage: "workers_ai", message: String(error?.message || error) }, 502);
@@ -119,15 +129,11 @@ export default {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
-        max_tokens: 1200,
+        max_tokens: 4096,
         temperature: 0.65,
       });
-      const reply = typeof result?.response === "string"
-        ? result.response
-        : typeof result?.choices?.[0]?.message?.content === "string"
-          ? result.choices[0].message.content
-          : "";
-      if (!reply) return json({ error: "Il modello non ha restituito una risposta leggibile." }, 502);
+      const reply = extractReply(result);
+      if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale. Riprova tra poco." }, 502);
       return json({ reply }, 200);
     } catch {
       return json({
