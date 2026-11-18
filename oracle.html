@@ -72,19 +72,33 @@ actions.append(edit,del);el.append(meta,body,actions);list.append(el);
 });
 }
 
+function memorySimilarity(a,b){
+const normalize=value=>String(value||'').toLocaleLowerCase('it').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\\s+/).filter(word=>word.length>2);
+const left=new Set(normalize(a)),right=new Set(normalize(b));
+if(!left.size||!right.size)return 0;
+let overlap=0;for(const word of left)if(right.has(word))overlap++;
+return overlap/Math.min(left.size,right.size);
+}
 function showMemorySuggestions(items){
 const root=$('memorySuggestions');root.innerHTML='';
 if(!items.length){root.textContent='Non sono emerse informazioni nuove abbastanza chiare da conservare.';return}
-const heading=document.createElement('div');heading.className='hint';heading.textContent='Proposte da verificare: salva soltanto quelle che vuoi conservare.';root.append(heading);
+const heading=document.createElement('div');heading.className='hint';heading.textContent='Proposte da verificare. Se una informazione aggiorna un ricordo esistente, puoi sostituirlo invece di creare un duplicato.';root.append(heading);
 items.forEach(item=>{
 const card=document.createElement('div');card.className='memoryitem';
 const category=document.createElement('select');
 Object.entries(CATEGORIES).forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;category.append(option)});
 category.value=CATEGORIES[item.category]?item.category:'interessi';
 const field=document.createElement('textarea');field.rows=3;field.value=String(item.text||'').slice(0,700);field.setAttribute('aria-label','Modifica il ricordo proposto');
+const match=memory.map(m=>({item:m,score:memorySimilarity(m.text,item.text)})).sort((a,b)=>b.score-a.score)[0];
+const possibleMatch=match&&match.score>=0.72?match.item:null;
+if(possibleMatch){const note=document.createElement('div');note.className='hint';note.textContent='Possibile aggiornamento di un ricordo già salvato: “'+possibleMatch.text.slice(0,150)+'”';card.append(note)}
 const actions=document.createElement('div');actions.className='memoryactions';
 const approve=document.createElement('button');approve.textContent='Approva e salva';
 approve.onclick=()=>{const text=field.value.trim();if(!text)return;memory.unshift({id:makeId(),category:category.value,text,created:new Date().toISOString(),updated:null});persist();renderMemory();card.remove();$('memoryStatus').textContent='Ricordo approvato e salvato su questo dispositivo.'};
+if(possibleMatch){
+const update=document.createElement('button');update.textContent='Aggiorna il ricordo';
+update.onclick=()=>{const text=field.value.trim();if(!text)return;possibleMatch.text=text;possibleMatch.category=category.value;possibleMatch.updated=new Date().toISOString();persist();renderMemory();card.remove();$('memoryStatus').textContent='Ricordo esistente aggiornato su questo dispositivo.'};actions.append(update);
+}
 const dismiss=document.createElement('button');dismiss.textContent='Ignora';dismiss.onclick=()=>card.remove();
 card.append(category,field,actions);actions.append(approve,dismiss);root.append(card);
 });
