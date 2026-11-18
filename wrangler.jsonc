@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "proud-scene-d65athe-oracle",
+  "main": "cloudflare-worker.js",
+  "compatibility_date": "2026-11-18",
+  "ai": {
+    "binding": "AI"
+  }
+}
