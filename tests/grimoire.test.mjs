@@ -40,7 +40,7 @@ test("health check non esegue inferenze e non consuma Neurons", async () => {
   const response = await worker.fetch(new Request(ENDPOINT + "?test=build"), env);
   const data = await response.json();
   assert.equal(response.status, 200);
-  assert.equal(data.build, "oracle-free-guard-2026-11-18");
+  assert.equal(data.build, "oracle-daily-plan-grimoire-2026-11-18");
   assert.equal(calls, 0);
 });
 
