@@ -129,6 +129,9 @@ async function streamChat(env, messages, maxTokens = 1536) {
         if (typeof parsed?.error === "string" && parsed.error) {
           throw new Error(parsed.error);
         }
+        if (typeof parsed?.error?.message === "string" && parsed.error.message) {
+          throw new Error(parsed.error.message);
+        }
         const delta = parsed?.choices?.[0]?.delta;
         if (typeof delta?.content === "string") emit(delta.content);
         else if (Array.isArray(delta?.content)) {
@@ -318,14 +321,15 @@ export default {
     const history = [];
     let historyChars = 0;
     if (Array.isArray(body.history)) {
-      for (const item of body.history.slice(-MAX_HISTORY_MESSAGES)) {
+      const recentHistory = body.history.slice(-MAX_HISTORY_MESSAGES).reverse();
+      for (const item of recentHistory) {
         const role = item?.role === "assistant" ? "assistant" : item?.role === "user" ? "user" : null;
         const raw = typeof item?.content === "string" ? item.content : typeof item?.text === "string" ? item.text : "";
         const content = raw.trim();
         if (!role || !content || historyChars >= MAX_HISTORY_CHARS) continue;
         const allowed = Math.min(3000, MAX_HISTORY_CHARS - historyChars);
         const clipped = content.slice(-allowed);
-        history.push({ role, content: clipped });
+        history.unshift({ role, content: clipped });
         historyChars += clipped.length;
       }
     }
