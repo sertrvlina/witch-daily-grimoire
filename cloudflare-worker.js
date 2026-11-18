@@ -389,14 +389,17 @@ export default {
       }
       if (!history.some(item => item.role === "user")) return json({ error: "Non ci sono messaggi dell'utente da analizzare." }, 400);
       try {
-        const extractionPrompt = `Analizza la conversazione fornita e individua soltanto informazioni personali stabili o utili nel tempo che l'utente ha dichiarato esplicitamente. Non dedurre tratti, diagnosi, dati sensibili o supposizioni. Escludi dettagli momentanei, domande generiche e informazioni già ripetute. Restituisci esclusivamente JSON valido nella forma {"suggestions":[{"category":"...","text":"..."}]}. Categorie ammesse: identita, personalita, interessi, obiettivi_breve, obiettivi_lungo, routine, relazioni, progetti, studio, progressi, difficolta, comunicazione, decisioni, verificare. Massimo 5 proposte, testo breve e fedele alle parole dell'utente. Se non ci sono informazioni adatte, restituisci {"suggestions":[]}.`;
+        const extractionPrompt = `Analizza la conversazione fornita e individua soltanto informazioni personali stabili o utili nel tempo che l'utente ha dichiarato esplicitamente. Non dedurre tratti, diagnosi, dati sensibili o supposizioni. Escludi dettagli momentanei e domande generiche. Se sono forniti ricordi già salvati, confronta ogni proposta con essi: quando la conversazione corregge o aggiorna chiaramente un ricordo esistente, restituisci action "update" e copia il testo esatto del ricordo da aggiornare in existingText; altrimenti usa action "new". Non proporre aggiornamenti basati su somiglianze vaghe. Restituisci esclusivamente JSON valido nella forma {"suggestions":[{"category":"...","text":"...","action":"new|update","existingText":""}]}. Categorie ammesse: identita, personalita, interessi, obiettivi_breve, obiettivi_lungo, routine, relazioni, progetti, studio, progressi, difficolta, comunicazione, decisioni, verificare. Massimo 5 proposte, testo breve e fedele alle parole dell'utente. Se non ci sono informazioni adatte, restituisci {"suggestions":[]}.`;
+        const existingMemory = Array.isArray(body.existingMemory) ? body.existingMemory.slice(0, 100).filter(item => item && typeof item.text === "string" && item.text.trim()).map(item => ({ category: String(item.category || "interessi").slice(0, 40), text: item.text.trim().slice(0, 700) })) : [];
+        const messages = [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: extractionPrompt },
+          ...(existingMemory.length ? [{ role: "system", content: "RICORDI GIÀ SALVATI (usali soltanto per evitare duplicati e proporre aggiornamenti espliciti):\\n" + JSON.stringify(existingMemory) }] : []),
+          ...history,
+          { role: "user", content: "Individua eventuali ricordi candidati in questa conversazione." }
+        ];
         const result = await env.AI.run(MODEL, {
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "system", content: extractionPrompt },
-            ...history,
-            { role: "user", content: "Individua eventuali ricordi candidati in questa conversazione." }
-          ],
+          messages,
           max_tokens: 1200,
           temperature: 0.1,
           chat_template_kwargs: { enable_thinking: false }
@@ -409,7 +412,7 @@ export default {
         const allowed = new Set(["identita","personalita","interessi","obiettivi_breve","obiettivi_lungo","routine","relazioni","progetti","studio","progressi","difficolta","comunicazione","decisioni","verificare"]);
         const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 5).filter(item =>
           item && allowed.has(item.category) && typeof item.text === "string" && item.text.trim()
-        ).map(item => ({ category: item.category, text: item.text.trim().slice(0, 700) })) : [];
+        ).map(item => ({ category: item.category, text: item.text.trim().slice(0, 700), action: item.action === "update" ? "update" : "new", existingText: typeof item.existingText === "string" ? item.existingText.trim().slice(0, 700) : "" })) : [];
         return json({ suggestions }, 200);
       } catch (error) {
         return json({ error: "Non è stato possibile analizzare la conversazione.", detail: String(error?.message || error).slice(0, 500) }, 502);
