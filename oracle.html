@@ -232,7 +232,7 @@ payload.history=prior.filter(x=>x&&(x.role==='user'||x.role==='assistant')&&type
 if($('memoryConsent').checked){const sharedParts=[];if(progressEntries.length)sharedParts.push('DIARIO EVOLUTIVO CONDIVISO DALL’UTENTE:\n'+progressEntries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,40).map(x=>'['+x.date+' · '+x.category+' · '+x.status+'] '+x.title+(x.notes?' — '+x.notes:'')).join('\n'));if(personalProfile.trim())sharedParts.push('PROFILO PERSONALE CONFERMATO DALL’UTENTE:\n'+personalProfile.trim());if(memory.length)sharedParts.push('NOTE PERSONALI SALVATE:\n'+memory.map(x=>'['+(CATEGORIES[x.category]||'Interessi e passioni')+'] '+x.text).join('\n'));if(sharedParts.length)payload.memory=sharedParts.join('\n\n')}
 if($('grimoireShareConsent').checked){
 const archive=await collectGrimoireData();
-const archiveText=JSON.stringify({archiviDiario:archive.pages,giornatePlanner:archive.days});
+const archiveText=JSON.stringify({archiviDiario:archive.pages,giornatePlanner:archive.days,programmiGiornalieri:archive.dailyPlans});
 payload.grimoire=archiveText.slice(0,14000);
 $('grimoireShareConsent').checked=false;
 $('grimoireStatus').textContent='Archivi allegati soltanto a questo messaggio ('+archive.pages.length+' pagine, '+archive.days.length+' giornate).';
