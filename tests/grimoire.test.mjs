@@ -19,6 +19,10 @@ function request(body, origin = ORIGIN) {
 
 test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
+  const supportPage = await read("bpd-support.html");
+  for (const feature of ["id=\"distress\"", "saveSenses", "saveUrge", "Piano personale", "DEAR MAN"]) {
+    assert.ok(supportPage.includes(feature), "support page missing " + feature);
+  }
   for (const file of ["index.html", "oracle.html", "image-studio.html", "document-studio.html", "life-tools.html", "sound-tools.html", "bpd-support.html"]) {
     const html = await read(file);
     const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
