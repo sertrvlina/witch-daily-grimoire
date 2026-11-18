@@ -460,13 +460,11 @@ export default {
 
     // I saluti semplici devono restare saluti: non allegare memoria, archivi o cronologia
     // e non lasciare che il modello trasformi un "ciao" in un'analisi personale.
-    const isSimpleGreeting = /^(?:ciao+|salve|buongiorno|buonasera|buonanotte|ehi|hey)(?:\\s+(?:lucilla+|lucillaaa?))?[!?.\\s🖤🌙✨]*$/iu.test(message);
+    const normalizedMessage = message.normalize("NFKC").trim();
+    const isSimpleGreeting = /^(?:ciao+|salve|buongiorno|buonasera|buonanotte|ehi+|hey+)(?:\s+(?:lucilla+|lucill+a*))?[!?.\s🖤🌙✨]*$/iu.test(normalizedMessage);
     if (isSimpleGreeting) {
-      return streamChat(env, [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: "REGOLA PER QUESTO TURNO: l'utente ha soltanto salutato. Rispondi con un saluto breve, caldo e spontaneo, massimo 12 parole. Non citare memoria, note, obiettivi, archivi o progetti. Non fare analisi, non proporre attività, non usare metafore teatrali o frasi sulla tua sensibilità digitale. Esempio di tono: \"Ciaooo! 🖤 Eccomi, che succede?\" Non copiare necessariamente l'esempio." },
-        { role: "user", content: message }
-      ], 80);
+      // A simple greeting is deterministic: do not invoke the model or attach any personal context.
+      return json({ reply: "Ciaooo! 🖤 Eccomi, come va?" }, 200);
     }
 
     const sharedContext = [];
