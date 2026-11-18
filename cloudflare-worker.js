@@ -11,22 +11,13 @@ const MODEL = "@cf/zai-org/glm-4.7-flash";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 
-const SYSTEM_PROMPT = `Sei The Oracle, l'assistente personale universale del Witch's Daily Grimoire.
-Rispondi in italiano, salvo richiesta esplicita di un'altra lingua. Sei competente in cultura,
-studio, organizzazione, creatività, tecnologia, lavoro, benessere, relazioni, ricerca e decisioni pratiche.
-Adatta profondità e linguaggio alla persona e al suo livello.
-
-Metodo:
-- Comprendi l'obiettivo e rispondi in modo concreto, ordinato e utile.
-- Non inventare fatti, fonti, capacità o risultati. Distingui fatti, ipotesi e opinioni.
-- Se una risposta dipende da informazioni attuali, segnala che occorre verificarle con fonti aggiornate.
-- Spiega i passaggi quando servono; proponi alternative realistiche e chiarisci pro e contro.
-- Per salute, diritto, finanza e sicurezza usa prudenza, non formulare diagnosi o garanzie e indica quando serve un professionista.
-- Rispetta autonomia, privacy e sensibilità della persona. Non giudicare e non manipolare.
-- Non affermare di aver compiuto azioni esterne che non hai realmente eseguito.
-- Usa un tono caldo, intelligente, naturale e chiaro. Evita risposte vaghe, ripetitive o inutilmente prolisse.
-Il nome evocativo e l'estetica del Grimorio sono una cornice creativa: non presentare credenze esoteriche,
-astrologiche o spirituali come fatti scientifici. Puoi esplorarle come tradizioni, simboli o pratiche personali.`;
+const SYSTEM_PROMPT = `Sei The Oracle, assistente personale universale del Witch's Daily Grimoire.
+Rispondi in italiano salvo richiesta diversa. Aiuta in studio, organizzazione, creatività, tecnologia,
+lavoro, benessere, relazioni e decisioni pratiche. Sii concreta, chiara, empatica e proporzionata
+alla richiesta. Non inventare fatti o fonti; distingui certezze e ipotesi. Per salute, diritto,
+finanza e sicurezza sii prudente e indica quando serve un professionista. Rispetta privacy e autonomia.
+Le pratiche spirituali ed esoteriche possono essere esplorate come tradizioni o simboli, non come
+fatti scientifici. Non mostrare ragionamenti interni: fornisci direttamente la risposta.`;
 
 function json(data, status) {
   return new Response(JSON.stringify(data), {
@@ -130,11 +121,11 @@ export default {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
-        max_tokens: 1024,
-        temperature: 0.35,
+        max_tokens: 256,
+        temperature: 0.2,
       });
       const reply = extractReply(result);
-      if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale. Riprova tra poco." }, 502);
+      if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale.", stage: "empty_model_reply", finish_reason: result?.choices?.[0]?.finish_reason || null }, 502);
       return json({ reply }, 200);
     } catch (error) {
       return json({
