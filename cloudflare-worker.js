@@ -362,7 +362,7 @@ export default {
         const form = new FormData();
         form.append("prompt", prompt);
         for (let index = 0; index < sources.length; index++) {
-          const match = sources[index].match(/^data:image\\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+          const match = sources[index].match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
           if (!match) return json({ error: "Formato immagine non valido. Usa JPEG, PNG o WebP." }, 400);
           const binary = atob(match[2]);
           const bytes = new Uint8Array(binary.length);
