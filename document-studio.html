@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#17131a">
+<title>Biblioteca e documenti · The Oracle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IM+Fell+English:ital@0;1&family=Montserrat:wght@300;400;500;600&display=swap');
+:root{--ink:#eee5df;--muted:#b8a8b2;--gold:#c4a777;--line:#604754;--wine:#754653}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#49303e 0,#211820 38%,#141116 80%);color:var(--ink);font:14px/1.6 Montserrat,sans-serif}.shell{max-width:1050px;margin:auto;padding:16px 12px 50px}.top{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:8px 0 16px}.top a{color:var(--gold);font-size:12px}.brand{font:italic 18px 'Cormorant Garamond',serif;text-decoration:none}.hero{text-align:center;padding:24px 8px}.hero h1{font:500 clamp(34px,7vw,52px) 'IM Fell English',serif;margin:4px}.hero p{font:italic 18px 'Cormorant Garamond',serif;color:var(--muted);margin:0}.sigil{color:var(--gold);letter-spacing:8px}.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px}.panel{background:linear-gradient(145deg,#281f29ed,#1b171eeb);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 16px 40px #0004}.panel h2{font:600 23px 'Cormorant Garamond',serif;color:var(--gold);margin:0 0 8px}.panel p,.muted{font-size:11px;color:var(--muted)}.tiny{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}button{border:1px solid var(--line);background:#33252e;color:var(--ink);border-radius:9px;padding:10px 12px;cursor:pointer}button:hover{border-color:var(--gold)}button.primary{background:var(--wine)}button:disabled{opacity:.5}.field{margin:12px 0}.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}input,select,textarea{width:100%;background:#171319;border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:10px;font:inherit}textarea{min-height:340px;resize:vertical;line-height:1.65}#question{min-height:75px}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.status{font-size:11px;color:#9eae91;min-height:24px;margin-top:8px}.filebox{border:1px dashed #96727f;border-radius:10px;padding:18px;text-align:center;background:#171319}.library{display:flex;flex-direction:column;gap:8px;margin-top:12px}.item{border:1px solid var(--line);background:#19151b;border-radius:9px;padding:9px;font-size:11px;overflow-wrap:anywhere}.item strong{display:block;color:var(--gold)}.tag{color:var(--muted);font-size:10px}.results{white-space:pre-wrap;overflow-wrap:anywhere;background:#171319;border:1px solid var(--line);border-radius:9px;padding:12px;min-height:100px;max-height:400px;overflow:auto;font-size:12px}.notice{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:9px;padding:10px;margin-top:12px}@media(max-width:760px){.layout{grid-template-columns:1fr}.shell{padding:12px 10px 40px}textarea{min-height:270px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+</head>
+<body><main class="shell">
+<header class="top"><a class="brand" href="./index.html">☽ The Witch's Daily Grimoire</a><a href="./oracle.html">← Torna a Lucilla</a></header>
+<section class="hero"><div class="sigil">✧ ☾ ✧</div><h1>Biblioteca e documenti</h1><p>Leggi, esplora, rielabora e crea i tuoi documenti.</p></section>
+<div class="layout">
+<aside class="panel">
+<div class="tiny">La tua biblioteca</div><h2>Apri un file</h2><p>I file vengono letti direttamente nel browser. Non vengono caricati su un archivio remoto.</p>
+<div class="filebox"><div>✧ Seleziona un documento</div><div class="muted">PDF · DOCX · TXT · MD · CSV · XLSX</div><input id="file" type="file" accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.xls"></div>
+<div class="library" id="fileInfo"></div>
+<div class="actions"><button id="clear">Svuota editor</button></div>
+<div class="notice">Per PDF e documenti Office vengono usate librerie open source caricate da CDN. Se una libreria esterna non è raggiungibile, i formati di testo semplice restano disponibili.</div>
+</aside>
+<section class="panel">
+<div class="tiny">Testo estratto · modificabile</div><h2>Il contenuto</h2>
+<div class="field"><label for="content">Puoi correggere, riscrivere o incollare qui il testo.</label><textarea id="content" placeholder="Il testo del documento apparirà qui. Puoi anche scrivere direttamente o incollare contenuti…"></textarea></div>
+<div class="actions">
+<button id="txt">Scarica TXT</button><button id="md">Scarica Markdown</button><button id="pdf">Crea PDF</button><button id="docx">Crea Word</button><button id="xlsx">Crea Excel</button>
+</div>
+<div class="tiny" style="margin-top:22px">Analisi con Lucilla</div><h2>Comprendi il documento</h2>
+<div class="field"><label for="question">Che cosa vuoi ottenere?</label><textarea id="question" placeholder="Riassumi, spiega i concetti difficili, crea appunti, individua le informazioni importanti, confronta le sezioni…">Riassumi il documento in modo chiaro e completo, mantenendo i concetti importanti e spiegando i termini difficili.</textarea></div>
+<label class="muted" style="display:flex;gap:8px;align-items:flex-start"><input id="consent" type="checkbox" style="width:auto;margin-top:3px"> Acconsento a inviare a Cloudflare AI il testo estratto e la mia richiesta per ottenere l'analisi. Il file originale resta sul dispositivo.</label>
+<div class="actions"><button class="primary" id="analyze" disabled>✧ Analizza con Lucilla</button></div><div class="status" id="status"></div>
+<div class="tiny" style="margin-top:15px">Risposta</div><div class="results" id="answer">L'analisi apparirà qui.</div>
+<div class="actions"><button id="saveAnswer">Scarica analisi TXT</button><button id="appendAnswer">Aggiungi analisi al documento</button></div>
+</section></div></main>
+<script>
+const ENDPOINT="https://proud-scene-d65athe-oracle.martinabianco2007.workers.dev";
+const $=id=>document.getElementById(id);
+let currentName="";
+function status(s){$("status").textContent=s}
+function updateAnalyze(){$("analyze").disabled=!($("content").value.trim()&&$("consent").checked)}
+function download(name,blob){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function getText(){return $("content").value}
+async function extract(file){
+ const ext=file.name.split(".").pop().toLowerCase();
+ if(["txt","md","csv"].includes(ext))return await file.text();
+ if(ext==="pdf"){
+  if(!window.pdfjsLib)throw new Error("Lettore PDF non disponibile: controlla la connessione e riprova.");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let out=[];
+  for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p),text=await page.getTextContent();out.push("\n[Pagina "+p+"]\n"+text.items.map(x=>x.str).join(" "))}
+  return out.join("\n");
+ }
+ if(ext==="docx"){
+  if(!window.mammoth)throw new Error("Lettore Word non disponibile: controlla la connessione e riprova.");
+  const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return r.value;
+ }
+ if(["xlsx","xls"].includes(ext)){
+  if(!window.XLSX)throw new Error("Lettore Excel non disponibile: controlla la connessione e riprova.");
+  const book=XLSX.read(await file.arrayBuffer(),{type:"array"});return book.SheetNames.map(n=>"## "+n+"\n"+XLSX.utils.sheet_to_csv(book.Sheets[n])).join("\n\n");
+ }
+ throw new Error("Formato non supportato.");
+}
+$("file").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;currentName=file.name;status("Sto leggendo "+file.name+"…");
+ try{$("content").value=await extract(file);$("fileInfo").innerHTML="";const item=document.createElement("div");item.className="item";const title=document.createElement("strong");title.textContent=file.name;const meta=document.createElement("span");meta.className="tag";meta.textContent=(file.size/1024).toFixed(1)+" KB · testo estratto localmente";item.append(title,meta);$("fileInfo").append(item);status("Documento pronto. Puoi modificarlo, esportarlo o chiedere un'analisi.");updateAnalyze()}
+ catch(err){status(err.message)}
+});
+$("content").addEventListener("input",updateAnalyze);$("consent").addEventListener("change",updateAnalyze);
+$("clear").onclick=()=>{currentName="";$("content").value="";$("file").value="";$("fileInfo").innerHTML="";$("answer").textContent="L'analisi apparirà qui.";status("");updateAnalyze()};
+$("txt").onclick=()=>download("documento.txt",new Blob([getText()],{type:"text/plain;charset=utf-8"}));
+$("md").onclick=()=>download("documento.md",new Blob([getText()],{type:"text/markdown;charset=utf-8"}));
+$("pdf").onclick=()=>{
+ if(!window.jspdf?.jsPDF){status("Generatore PDF non disponibile. TXT e Markdown restano utilizzabili.");return}
+ const doc=new jspdf.jsPDF({unit:"pt",format:"a4"});const lines=doc.splitTextToSize(getText(),515);let y=48;
+ for(const line of lines){if(y>790){doc.addPage();y=48}doc.text(line,40,y);y+=15}
+ doc.save("documento.pdf");
+};
+$("docx").onclick=async()=>{
+ if(!window.docx){status("Generatore Word non disponibile. TXT e Markdown restano utilizzabili.");return}
+ try{const {Document,Packer,Paragraph}=docx;const paragraphs=getText().split(/\r?\n/).map(line=>new Paragraph({text:line}));const blob=await Packer.toBlob(new Document({sections:[{children:paragraphs}]}));download("documento.docx",blob)}
+ catch(e){status("Creazione Word non riuscita: "+e.message)}
+};
+$("xlsx").onclick=()=>{
+ if(!window.XLSX){status("Generatore Excel non disponibile.");return}
+ const rows=getText().split(/\r?\n/).map(line=>[line]);const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Documento");XLSX.writeFile(wb,"documento.xlsx");
+};
+$("analyze").onclick=async()=>{
+ const text=getText().trim();if(!text||!$("consent").checked)return;
+ $("analyze").disabled=true;status("Lucilla sta leggendo il testo e preparando l'analisi…");
+ try{
+  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action:"analyze_document",text,question:$("question").value.trim()})});
+  const data=await res.json();if(!res.ok||!data.reply)throw new Error(data.error||data.detail||"Analisi non disponibile.");
+  $("answer").textContent=data.reply;status("Analisi completata. Puoi salvarla o unirla al documento.");
+ }catch(e){status("Analisi non riuscita: "+e.message)}
+ updateAnalyze();
+};
+$("saveAnswer").onclick=()=>download("analisi-lucilla.txt",new Blob([$("answer").textContent],{type:"text/plain;charset=utf-8"}));
+$("appendAnswer").onclick=()=>{$("content").value=getText()+"\n\n---\n\nANALISI DI LUCILLA\n\n"+$("answer").textContent;updateAnalyze();status("Analisi aggiunta all'editor.")};
+</script></body></html>
