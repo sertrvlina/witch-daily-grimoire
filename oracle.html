@@ -24,7 +24,7 @@
 <aside class="side">
 <section class="panel"><div class="tiny">Memoria personale · Personal Knowledge Base</div><h2>Il mio grimorio interiore</h2><p>La tua memoria è organizzata in categorie e resta salvata in questo browser. Aggiungi solo ciò che desideri conservare; puoi modificare o eliminare ogni ricordo.</p><div class="field"><label for="memoryCategory">Categoria</label><select id="memoryCategory"><option value="identita">Identità e informazioni personali</option><option value="personalita">Personalità e preferenze</option><option value="interessi">Interessi e passioni</option><option value="obiettivi_breve">Obiettivi a breve termine</option><option value="obiettivi_lungo">Obiettivi a lungo termine</option><option value="routine">Routine e abitudini</option><option value="relazioni">Relazioni importanti</option><option value="progetti">Progetti in corso</option><option value="studio">Percorsi di studio</option><option value="progressi">Progressi raggiunti</option><option value="difficolta">Difficoltà ricorrenti</option><option value="comunicazione">Preferenze di comunicazione</option><option value="decisioni">Decisioni già prese</option><option value="verificare">Informazioni da verificare o aggiornare</option></select></div><div class="field"><label for="memoryInput">Cosa vuoi che Lucilla ricordi?</label><textarea id="memoryInput" rows="3" placeholder="Scrivi un'informazione chiara e specifica…"></textarea></div><div class="actions"><button class="primary" id="addMemory">Aggiungi alla memoria</button><button id="cancelMemoryEdit" hidden>Annulla modifica</button></div><div class="field"><label for="memorySearch">Cerca nei ricordi</label><input id="memorySearch" type="search" placeholder="Cerca una parola o un argomento…"></div><div id="memoryCount" class="hint">0 ricordi salvati</div><div id="memoryList" class="memorylist"></div><div class="actions"><button id="analyzeMemory">✧ Proponi ricordi dalla conversazione</button></div><div id="memorySuggestions" class="memorylist" aria-live="polite"></div><div class="field"><label for="personalProfile">Profilo personale di Lucilla</label><textarea id="personalProfile" rows="9" placeholder="Genera il profilo a partire dai ricordi che hai scelto di conservare. Potrai modificarlo liberamente."></textarea></div><div class="actions"><button class="primary" id="generateProfile">☽ Genera / aggiorna profilo</button><button id="saveProfile">Salva profilo</button></div><div class="status" id="profileStatus">Profilo non ancora generato.</div><div class="divider"></div><h3>Diario evolutivo · La tua crescita nel tempo</h3><p class="hint">Registra obiettivi, inizi, traguardi, cambiamenti e progetti. Puoi aggiornare lo stato quando qualcosa evolve.</p><div class="field"><label for="progressTitle">Titolo del traguardo o dell'esperienza</label><input id="progressTitle" maxlength="120" placeholder="Es. Ho ripreso a disegnare con costanza"></div><div class="field"><label for="progressDate">Data</label><input id="progressDate" type="date"></div><div class="field"><label for="progressCategory">Ambito</label><select id="progressCategory"><option value="personale">Crescita personale</option><option value="studio">Studio e formazione</option><option value="creativita">Creatività e arte</option><option value="lavoro">Lavoro e indipendenza</option><option value="relazioni">Relazioni</option><option value="benessere">Benessere e abitudini</option><option value="progetti">Progetti</option><option value="altro">Altro</option></select></div><div class="field"><label for="progressStatusSelect">Stato</label><select id="progressStatusSelect"><option value="idea">Idea / da iniziare</option><option value="in_corso">In corso</option><option value="completato">Completato</option><option value="in_pausa">In pausa</option></select></div><div class="field"><label for="progressNotes">Note e dettagli</label><textarea id="progressNotes" rows="3" maxlength="1800" placeholder="Che cosa è successo? Che cosa hai imparato? Qual è il prossimo piccolo passo?"></textarea></div><div class="actions"><button class="primary" id="saveProgress">Aggiungi al diario</button><button id="cancelProgressEdit" hidden>Annulla modifica</button></div><div class="status" id="progressStatus">Diario evolutivo pronto.</div><div id="progressSummary" class="progress-summary" aria-live="polite"></div><div id="progressTimeline" class="memorylist"></div><div id="progressList" class="memorylist"></div><div class="actions"><button id="exportData">Esporta backup</button><label for="importData" style="border:1px solid var(--line);border-radius:9px;padding:10px 14px;cursor:pointer">Importa backup</label><input id="importData" type="file" accept="application/json,.json" hidden></div><div class="status" id="memoryStatus">Memoria locale attiva.</div></section>
 <section class="panel"><div class="tiny">Connessione AI</div><h2>Il ponte verso l'oracolo</h2><p>Il collegamento usa il Worker Cloudflare del progetto. I messaggi vengono inviati solo dopo il tuo consenso. Non inserire qui chiavi segrete.</p><div class="field"><label for="endpoint">Indirizzo del backend</label><input id="endpoint" type="url" placeholder="https://tuo-worker.workers.dev"></div><label class="checkline"><input type="checkbox" id="cloudConsent"> <span>Acconsento a inviare al backend il messaggio corrente e gli ultimi 8 messaggi della conversazione, per mantenere il contesto.</span></label><label class="checkline"><input type="checkbox" id="memoryConsent"> <span>Allega anche le note e il profilo personale salvati su questo dispositivo ai messaggi inviati.</span></label><p class="warn">Gli archivi del grimorio non vengono allegati automaticamente. Gli ultimi 8 messaggi vengono condivisi solo con il consenso qui sopra; le note personali e il profilo vengono inclusi esclusivamente se attivi la casella dedicata.</p><div class="status" id="connectionStatus">Non collegata · modalità locale</div></section>
-<section class="panel"><div class="tiny">☽ Connessione con il grimorio</div><h2>Consultare i miei archivi</h2><p>La consultazione avviene localmente in questo browser. Scegli quando autorizzarla. I contenuti non vengono inviati al backend da questa funzione.</p><label class="checkline"><input type="checkbox" id="grimoireConsent"><span>Autorizzo The Oracle a leggere gli archivi salvati su questo dispositivo.</span></label><div class="actions"><button class="primary" id="readGrimoire">☽ Consulta il grimorio</button><button id="clearGrimoire">Cancella anteprima</button></div><div class="status" id="grimoireStatus">Archivi non consultati.</div><pre id="grimoirePreview" class="preview">Nessun contenuto caricato.</pre></section>
+<section class="panel"><div class="tiny">☽ Connessione con il grimorio</div><h2>Consultare e condividere gli archivi</h2><p>La lettura avviene localmente su questo dispositivo. La condivisione con Lucilla è separata e avviene soltanto per il prossimo messaggio, se autorizzi anche l'invio al backend.</p><label class="checkline"><input type="checkbox" id="grimoireConsent"><span>Autorizzo The Oracle a leggere gli archivi salvati su questo dispositivo.</span></label><div class="actions"><button class="primary" id="readGrimoire">☽ Consulta il grimorio</button><button id="clearGrimoire">Cancella anteprima</button></div><label class="checkline"><input type="checkbox" id="grimoireShareConsent"><span>Condividi gli archivi letti con Lucilla nel prossimo messaggio che invierò. La scelta si azzera dopo l'invio.</span></label><p class="hint">Per condividere servono entrambe le autorizzazioni: questa casella e il consenso all'invio AI. Verranno inclusi i diari e le giornate del planner, entro un limite tecnico. Non vengono salvati sul server.</p><div class="status" id="grimoireStatus">Archivi non consultati.</div><pre id="grimoirePreview" class="preview">Nessun contenuto caricato.</pre></section>
 <section class="panel"><div class="tiny">Un piccolo promemoria</div><h3>La tua privacy viene prima</h3><p>La cronologia e le note sono salvate nel localStorage di questo browser. Non sono sincronizzate tra dispositivi. Esporta periodicamente una copia e conservala in un luogo sicuro.</p></section>
 </aside></div><div class="foot">“Per aspera ad astra” · Through darkness, toward the stars</div></main>
 <button class="fab" id="scrollChat" aria-label="Torna alla conversazione">☾</button>
@@ -41,7 +41,7 @@ difficolta:'Difficoltà ricorrenti',comunicazione:'Preferenze di comunicazione',
 verificare:'Informazioni da verificare o aggiornare'
 };
 const $=id=>document.getElementById(id);
-let chat=[],memory=[],progressEntries=[],editingMemoryId=null,editingProgressId=null,personalProfile=localStorage.getItem(KEYS.profile)||'';
+let chat=[],memory=[],progressEntries=[],editingMemoryId=null,editingProgressId=null,personalProfile=localStorage.getItem(KEYS.profile)||'',grimoireSnapshot=null;
 const safeParse=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 function makeId(){return 'm_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
 function normalizeMemory(item){
@@ -175,6 +175,10 @@ resetMemoryEditor();persist();renderMemory();
 async function send(){
 const text=$('message').value.trim();
 if(!text||$('send').disabled)return;
+if($('grimoireShareConsent').checked&&(!$('grimoireConsent').checked||!$('cloudConsent').checked)){
+$('grimoireStatus').textContent='Per condividere gli archivi, autorizza sia la lettura locale sia l’invio AI.';
+return;
+}
 $('message').value='';
 addBubble('user',text);
 const endpoint=$('endpoint').value.trim();
@@ -206,6 +210,13 @@ const payload={message:text};
 const prior=chat.slice(0,-1).slice(-8);
 payload.history=prior.filter(x=>x&&(x.role==='user'||x.role==='assistant')&&typeof x.text==='string').map(x=>({role:x.role,content:x.text}));
 if($('memoryConsent').checked){const sharedParts=[];if(progressEntries.length)sharedParts.push('DIARIO EVOLUTIVO CONDIVISO DALL’UTENTE:\n'+progressEntries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,40).map(x=>'['+x.date+' · '+x.category+' · '+x.status+'] '+x.title+(x.notes?' — '+x.notes:'')).join('\n'));if(personalProfile.trim())sharedParts.push('PROFILO PERSONALE CONFERMATO DALL’UTENTE:\n'+personalProfile.trim());if(memory.length)sharedParts.push('NOTE PERSONALI SALVATE:\n'+memory.map(x=>'['+(CATEGORIES[x.category]||'Interessi e passioni')+'] '+x.text).join('\n'));if(sharedParts.length)payload.memory=sharedParts.join('\n\n')}
+if($('grimoireShareConsent').checked){
+const archive=await collectGrimoireData();
+const archiveText=JSON.stringify({archiviDiario:archive.pages,giornatePlanner:archive.days});
+payload.grimoire=archiveText.slice(0,14000);
+$('grimoireShareConsent').checked=false;
+$('grimoireStatus').textContent='Archivi allegati soltanto a questo messaggio ('+archive.pages.length+' pagine, '+archive.days.length+' giornate).';
+}
 const requestOptions={
 method:'POST',
 mode:'cors',
@@ -305,43 +316,50 @@ async function readDays(){
       const db=request.result,storeNames=Array.from(db.objectStoreNames);
       if(!storeNames.includes('days')){db.close();resolve({days:[],databaseFound:true,storeFound:false,storeNames,databaseNames});return}
       try{
-        const tx=db.transaction('days','readonly'),store=tx.objectStore('days'),get=store.getAll();
-        get.onsuccess=()=>{resolve({days:get.result||[],databaseFound:true,storeFound:true,storeNames,databaseNames});db.close()};
+        const tx=db.transaction('days','readonly'),get=tx.objectStore('days').getAll();
+        get.onsuccess=()=>{const days=get.result||[];resolve({days,databaseFound:true,storeFound:true,storeNames,databaseNames});db.close()};
         get.onerror=()=>{const error=get.error;db.close();reject(error)};
       }catch(error){db.close();reject(error)}
     };
   });
 }
+async function collectGrimoireData(){
+  const raw=localStorage.getItem('witchGrimoirePagesV1');
+  let pages=[];
+  if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))pages=parsed}
+  const dayResult=await readDays(),days=dayResult.days;
+  const localKeys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter(Boolean).sort();
+  return {
+    pages,days,
+    diagnostics:{
+      origin:location.origin,
+      diaryKeyPresent:raw!==null,
+      diaryDataType:raw===null?'missing':Array.isArray(JSON.parse(raw))?'array':'not-an-array',
+      localStorageKeys:localKeys,
+      plannerDatabaseFound:dayResult.databaseFound,
+      plannerStoreFound:dayResult.storeFound,
+      databaseNames:dayResult.databaseNames,
+      plannerStoreNames:dayResult.storeNames
+    }
+  };
+}
 $('readGrimoire').onclick=async()=>{
   const status=$('grimoireStatus'),preview=$('grimoirePreview');
   if(!$('grimoireConsent').checked){status.textContent='Prima devi attivare la casella di autorizzazione.';return}
-  status.textContent='Lettura locale e diagnostica in corso…';preview.textContent='';
+  status.textContent='Lettura locale in corso…';preview.textContent='';
   try{
-    const raw=localStorage.getItem('witchGrimoirePagesV1');
-    let pages=[];
-    if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))pages=parsed}
-    const dayResult=await readDays(),days=dayResult.days;
-    const localKeys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter(Boolean).sort();
+    grimoireSnapshot=await collectGrimoireData();
     const result={
       consultazioneLocale:new Date().toISOString(),
-      diagnostica:{
-        origine:location.origin,
-        chiaveDiarioPresente:raw!==null,
-        tipoDatoDiario:raw===null?'assente':Array.isArray(JSON.parse(raw))?'array':'formato diverso da array',
-        chiaviLocalStorage:localKeys,
-        databasePlannerPresente:dayResult.databaseFound,
-        archivioDaysPresente:dayResult.storeFound,
-        archiviDatabase:dayResult.databaseNames,
-        archiviNelDatabase:dayResult.storeNames
-      },
-      archiviDiario:pages,
-      giornatePlanner:days
+      diagnostica:grimoireSnapshot.diagnostics,
+      archiviDiario:grimoireSnapshot.pages,
+      giornatePlanner:grimoireSnapshot.days
     };
     preview.textContent=JSON.stringify(result,null,2);
-    status.textContent='Diagnostica completata: '+pages.length+' pagine e '+days.length+' giornate trovate. Nessun dato è stato modificato o inviato.';
-  }catch(error){status.textContent='Non è stato possibile leggere gli archivi: '+error.message;preview.textContent='Nessun dato mostrato.'}
+    status.textContent='Lettura completata: '+grimoireSnapshot.pages.length+' pagine e '+grimoireSnapshot.days.length+' giornate. Dati ancora locali.';
+  }catch(error){grimoireSnapshot=null;status.textContent='Lettura non riuscita: '+error.message;preview.textContent='Nessun dato mostrato.'}
 };
-$('clearGrimoire').onclick=()=>{$('grimoirePreview').textContent='Nessun contenuto caricato.';$('grimoireStatus').textContent='Anteprima cancellata.';$('grimoireConsent').checked=false};
+$('clearGrimoire').onclick=()=>{grimoireSnapshot=null;$('grimoirePreview').textContent='Nessun contenuto caricato.';$('grimoireStatus').textContent='Anteprima cancellata.';$('grimoireConsent').checked=false;$('grimoireShareConsent').checked=false};
 updateMode();
 })();
 </script>
