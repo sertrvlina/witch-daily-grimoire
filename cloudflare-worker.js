@@ -444,6 +444,29 @@ export default {
       }
     }
 
+
+    if (body.action === "analyze_document") {
+      const documentText = typeof body.text === "string" ? body.text.slice(0, 50000).trim() : "";
+      const question = typeof body.question === "string" ? body.question.trim().slice(0, 3000) : "Riassumi il documento in modo chiaro e completo.";
+      if (!documentText) return json({ error: "Il documento non contiene testo leggibile." }, 400);
+      try {
+        const result = await env.AI.run(MODEL, {
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT + "\\n\\nQuando analizzi un documento, distingui ciò che è scritto nel documento dalle tue interpretazioni. Non inventare parti mancanti. Organizza la risposta in modo leggibile e cita titoli o sezioni del testo quando possibile." },
+            { role: "user", content: "RICHIESTA: " + question + "\\n\\nCONTENUTO DEL DOCUMENTO (estratto localmente dal file scelto dall'utente):\\n" + documentText }
+          ],
+          max_tokens: 2500,
+          temperature: 0.3,
+          chat_template_kwargs: { enable_thinking: false }
+        });
+        const reply = extractReply(result);
+        if (!reply) return json({ error: "Il modello non ha restituito un'analisi." }, 502);
+        return json({ reply }, 200);
+      } catch (error) {
+        return json({ error: "Analisi del documento non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
+      }
+    }
+
     if (body.action === "suggest_memories") {
       const history = [];
       let historyChars = 0;
