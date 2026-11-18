@@ -21,7 +21,24 @@
 <aside class="side">
  <section class="panel"><div class="tiny">Memoria personale</div><h2>Il mio grimorio interiore</h2><p>Aggiungi solo informazioni che vuoi ritrovare nelle prossime conversazioni. Restano salvate in questo browser.</p><div class="field"><label for="memoryInput">Una nota da ricordare</label><textarea id="memoryInput" rows="3" placeholder="Preferenze, obiettivi, progetti…"></textarea></div><button class="primary" id="addMemory">Aggiungi alla memoria</button><div id="memoryList" class="memorylist"></div><div class="actions"><button id="exportData">Esporta dati</button><label for="importData" style="border:1px solid var(--line);border-radius:9px;padding:10px 14px;cursor:pointer">Importa dati</label><input id="importData" type="file" accept="application/json,.json" hidden></div><div class="status" id="memoryStatus">Memoria locale attiva.</div></section>
  <section class="panel"><div class="tiny">Connessione AI</div><h2>Il ponte verso l'oracolo</h2><p>Per attivare risposte AI serve un backend sicuro, con la chiave API custodita sul server. Non inserire qui chiavi segrete.</p><div class="field"><label for="endpoint">Indirizzo del backend (facoltativo)</label><input id="endpoint" type="url" placeholder="https://tuo-server.example/api/chat"></div><label class="checkline"><input type="checkbox" id="cloudConsent"> <span>Acconsento a inviare al backend i messaggi che scelgo di spedire.</span></label><label class="checkline"><input type="checkbox" id="memoryConsent"> <span>Allega anche le note della mia memoria locale ai messaggi inviati.</span></label><p class="warn">I diari del grimorio non vengono letti né allegati automaticamente. La memoria viene inclusa solo se attivi la casella dedicata.</p><div class="status" id="connectionStatus">Non collegata · modalità locale</div></section>
- <section class="panel"><div class="tiny">Un piccolo promemoria</div><h3>La tua privacy viene prima</h3><p>La cronologia e le note sono salvate nel localStorage di questo browser. Non sono sincronizzate tra dispositivi. Esporta periodicamente una copia e conservala in un luogo sicuro.</p></section>
+<section class="panel">
+  <div class="tiny">☽ Connessione con il grimorio</div>
+  <h2>Consultare i miei archivi</h2>
+  <p>Permetti a The Oracle di leggere le informazioni che scegli, direttamente da questo dispositivo.</p>
+
+  <label class="checkline">
+    <input type="checkbox" id="grimoireConsent">
+    <span>Autorizzo la consultazione locale dei miei archivi.</span>
+  </label>
+
+  <div class="actions">
+    <button class="primary" id="readGrimoire">☽ Consulta il grimorio</button>
+    <button id="clearGrimoire">Cancella anteprima</button>
+  </div>
+
+  <div class="status" id="grimoireStatus">Archivi non consultati.</div>
+  <pre id="grimoirePreview" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:350px;overflow:auto;font-size:11px;color:var(--muted)"></pre>
+</section> <section class="panel"><div class="tiny">Un piccolo promemoria</div><h3>La tua privacy viene prima</h3><p>La cronologia e le note sono salvate nel localStorage di questo browser. Non sono sincronizzate tra dispositivi. Esporta periodicamente una copia e conservala in un luogo sicuro.</p></section>
 </aside></div><div class="foot">“Per aspera ad astra” · Through darkness, toward the stars</div></main>
 <button class="fab" id="scrollChat" aria-label="Torna alla conversazione">☾</button>
 <script>
