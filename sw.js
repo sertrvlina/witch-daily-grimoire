@@ -1,5 +1,5 @@
 
-const CACHE = 'witch-grimoire-v12';
+const CACHE = 'witch-grimoire-v13';
 
 const FILES = [
   './',
