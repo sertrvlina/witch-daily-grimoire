@@ -49,7 +49,7 @@ $('memoryConsent').onchange=()=>localStorage.setItem(KEYS.include,String($('memo
 $('addMemory').onclick=()=>{const t=$('memoryInput').value.trim();if(!t)return;memory.unshift({text:t,created:new Date().toISOString()});$('memoryInput').value='';persist();renderMemory();$('memoryStatus').textContent='Nota salvata solo su questo dispositivo.'};
 async function send(){
 const text=$('message').value.trim();
-if(!text)return;
+if(!text||$('send').disabled)return;
 $('message').value='';
 addBubble('user',text);
 const endpoint=$('endpoint').value.trim();
@@ -101,7 +101,7 @@ $('modeHint').textContent='Connessione instabile: nuovo tentativo '+(attempt+1)+
 await new Promise(resolve=>setTimeout(resolve,600*attempt));
 continue;
 }
-if([429,502,503,504].includes(response.status)&&attempt<3){
+if([429,502,503,504,520,521,522,523,524,525,526].includes(response.status)&&attempt<3){
 $('modeHint').textContent='Il backend sta riprovando…';
 await new Promise(resolve=>setTimeout(resolve,800*attempt));
 continue;
@@ -120,7 +120,7 @@ if(!data)return;
 if(data==='[DONE]'){streamFinished=true;return}
 let parsed;
 try{parsed=JSON.parse(data)}catch{return}
-if(parsed&&typeof parsed.error==='string')throw new Error(parsed.error);
+if(parsed&&typeof parsed.error==='string')throw new Error(parsed.error);if(parsed&&parsed.error&&typeof parsed.error.message==='string')throw new Error(parsed.error.message);
 if(typeof parsed.text==='string')appendStreamText(parsed.text);
 else if(typeof parsed.response==='string')appendStreamText(parsed.response);
 }
