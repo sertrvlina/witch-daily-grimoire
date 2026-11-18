@@ -140,3 +140,20 @@ test("analisi documento usa il modello solo dopo POST autorizzato", async () => 
   assert.equal(data.reply, "Analisi completata.");
   assert.equal(calls, 1);
 });
+
+test("quota gratuita esaurita produce un messaggio di stop senza upgrade", async () => {
+  const env = { AI: { run: async () => {
+    const error = new Error("Daily Neurons quota exceeded");
+    error.status = 429;
+    throw error;
+  } } };
+  const response = await worker.fetch(request({
+    action: "image_generate",
+    prompt: "Una luna sopra un castello",
+    outputSize: 512,
+  }), env);
+  const data = await response.json();
+  assert.equal(response.status, 429);
+  assert.match(data.error, /quota gratuita/i);
+  assert.match(data.error, /nessun upgrade o pagamento/i);
+});
