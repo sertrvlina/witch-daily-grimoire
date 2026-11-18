@@ -8,7 +8,7 @@
  */
 const ALLOWED_ORIGIN = "*";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-image-studio-2026-11-18";
+const BUILD_ID = "oracle-creative-tools-2026-11-18";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
