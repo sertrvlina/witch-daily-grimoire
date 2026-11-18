@@ -8,13 +8,13 @@
  */
 const ALLOWED_ORIGIN = "*";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-greeting-fix-2026-11-18";
+const BUILD_ID = "oracle-image-studio-2026-11-18";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_HISTORY_CHARS = 16000;
-const MAX_BODY_CHARS = 50000;
+const MAX_BODY_CHARS = 1800000;
 
 const SYSTEM_PROMPT = `Sei Lucilla Blackwood, l'assistente personale di Martina all'interno di The Oracle, parte del Witch's Daily Grimoire.
 
@@ -403,6 +403,46 @@ export default {
     let body;
     try { body = JSON.parse(rawBody); }
     catch { return json({ error: "Corpo JSON non valido." }, 400); }
+
+
+    if (body.action === "image_edit") {
+      const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 4000) : "";
+      const source = typeof body.image === "string" ? body.image : "";
+      if (!prompt) return json({ error: "Descrivi la modifica che desideri." }, 400);
+      if (!source || source.length > 1500000) return json({ error: "Immagine mancante o troppo grande. Riprova con un'immagine più leggera." }, 413);
+      const match = source.match(/^data:image\\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json({ error: "Formato immagine non valido. Usa JPEG, PNG o WebP." }, 400);
+      try {
+        const binary = atob(match[2]);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const form = new FormData();
+        form.append("prompt", prompt);
+        form.append("input_image_0", new Blob([bytes], { type: "image/" + match[1] }), "reference." + (match[1] === "jpeg" ? "jpg" : match[1]));
+        form.append("width", "1024");
+        form.append("height", "1024");
+        const serialized = new Response(form);
+        const result = await env.AI.run("@cf/black-forest-labs/flux-2-klein-4b", {
+          multipart: {
+            body: serialized.body,
+            contentType: serialized.headers.get("content-type")
+          }
+        });
+        const generated = result?.image;
+        if (!generated) return json({ error: "Il modello non ha restituito un'immagine. Riprova con una descrizione diversa." }, 502);
+        let image;
+        if (typeof generated === "string") image = generated.startsWith("data:") ? generated : "data:image/png;base64," + generated;
+        else if (generated instanceof Uint8Array || generated instanceof ArrayBuffer) {
+          const data = generated instanceof Uint8Array ? generated : new Uint8Array(generated);
+          let binaryOut = "";
+          for (let i = 0; i < data.length; i += 0x8000) binaryOut += String.fromCharCode(...data.subarray(i, i + 0x8000));
+          image = "data:image/png;base64," + btoa(binaryOut);
+        } else return json({ error: "Formato immagine restituito dal modello non riconosciuto." }, 502);
+        return json({ image, model: "FLUX.2 Klein 4B" }, 200);
+      } catch (error) {
+        return json({ error: "Modifica immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
+      }
+    }
 
     if (body.action === "suggest_memories") {
       const history = [];
