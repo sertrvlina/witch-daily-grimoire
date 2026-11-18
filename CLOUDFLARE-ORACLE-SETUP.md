@@ -26,7 +26,7 @@ Il modello usato è `@cf/black-forest-labs/flux-2-klein-4b`.
 ## Funzioni
 - Chat con Lucilla tramite `@cf/zai-org/glm-4.7-flash`.
 - Analisi di documenti: il testo viene estratto nel browser; soltanto dopo consenso viene inviato al Worker.
-- Studio immagini: l'immagine viene ridimensionata nel browser; viene inviata al Worker solo dopo consenso esplicito. È disponibile la risoluzione 512 o 1024.
+- Studio immagini: crea immagini da testo oppure modifica usando fino a quattro riferimenti visivi. Le immagini vengono ridimensionate nel browser e inviate solo dopo consenso esplicito. È disponibile la risoluzione 512 o 1024.
 - Memoria, archivi e dati del Grimorio restano locali, salvo condivisione esplicita dall'interfaccia.
 
 ## Privacy
