@@ -295,8 +295,52 @@ $('clearChat').onclick=()=>{if(confirm('Cancellare la cronologia salvata su ques
 $('scrollChat').onclick=()=>$('message').focus();
 $('exportData').onclick=()=>{const blob=new Blob([JSON.stringify({format:'oracle-local-v4',exportedAt:new Date().toISOString(),chat,memory,profile:personalProfile,progress:progressEntries},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='The-Oracle-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)};
 $('importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const v=JSON.parse(reader.result);if(!['oracle-local-v1','oracle-local-v2','oracle-local-v3','oracle-local-v4'].includes(v.format)||!Array.isArray(v.chat)||!Array.isArray(v.memory))throw Error();if(!confirm('Unire i dati importati a quelli già presenti?'))return;chat=[...v.chat,...chat];memory=[...v.memory.map(normalizeMemory).filter(Boolean),...memory];if(Array.isArray(v.progress))progressEntries=[...v.progress.filter(x=>x&&typeof x.title==='string').map(x=>({...x,id:x.id||makeId()})),...progressEntries];if(typeof v.profile==='string'&&v.profile.trim()&&!personalProfile.trim()){personalProfile=v.profile;localStorage.setItem(KEYS.profile,personalProfile);$('personalProfile').value=personalProfile}$('profileStatus').textContent=personalProfile?'Profilo importato o già presente.':'Profilo da generare.';persist();renderChat();renderMemory();renderProgress();$('memoryStatus').textContent='Backup importato e convertito nel formato aggiornato.'}catch{$('memoryStatus').textContent='File non valido: nessun dato importato.'}e.target.value=''};reader.readAsText(f)};
-function readDays(){return new Promise((resolve,reject)=>{const request=indexedDB.open('witchGrimoireDB');request.onerror=()=>reject(request.error);request.onsuccess=()=>{const db=request.result;if(!db.objectStoreNames.contains('days')){db.close();resolve([]);return}try{const tx=db.transaction('days','readonly');const get=tx.objectStore('days').getAll();get.onsuccess=()=>{resolve(get.result||[]);db.close()};get.onerror=()=>{reject(get.error);db.close()}}catch(error){db.close();reject(error)}}})}
-$('readGrimoire').onclick=async()=>{const status=$('grimoireStatus'),preview=$('grimoirePreview');if(!$('grimoireConsent').checked){status.textContent='Prima devi attivare la casella di autorizzazione.';return}status.textContent='Lettura locale in corso…';preview.textContent='';try{const raw=localStorage.getItem('witchGrimoirePagesV1');let pages=[];if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))pages=parsed}const days=await readDays();const result={consultazioneLocale:new Date().toISOString(),archiviDiario:pages,giornatePlanner:days};preview.textContent=JSON.stringify(result,null,2);status.textContent='Consultazione completata: '+pages.length+' pagine di diario e '+days.length+' giornate. Dati rimasti in questo browser.'}catch(error){status.textContent='Non è stato possibile leggere gli archivi: '+error.message;preview.textContent='Nessun dato mostrato.'}};
+async function readDays(){
+  const databaseNames=typeof indexedDB.databases==='function'?(await indexedDB.databases()).map(item=>item.name).filter(Boolean):null;
+  if(databaseNames&&!databaseNames.includes('witchGrimoireDB'))return {days:[],databaseFound:false,storeFound:false,storeNames:[],databaseNames};
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open('witchGrimoireDB');
+    request.onerror=()=>reject(request.error);
+    request.onsuccess=()=>{
+      const db=request.result,storeNames=Array.from(db.objectStoreNames);
+      if(!storeNames.includes('days')){db.close();resolve({days:[],databaseFound:true,storeFound:false,storeNames,databaseNames});return}
+      try{
+        const tx=db.transaction('days','readonly'),store=tx.objectStore('days'),get=store.getAll();
+        get.onsuccess=()=>{resolve({days:get.result||[],databaseFound:true,storeFound:true,storeNames,databaseNames});db.close()};
+        get.onerror=()=>{const error=get.error;db.close();reject(error)};
+      }catch(error){db.close();reject(error)}
+    };
+  });
+}
+$('readGrimoire').onclick=async()=>{
+  const status=$('grimoireStatus'),preview=$('grimoirePreview');
+  if(!$('grimoireConsent').checked){status.textContent='Prima devi attivare la casella di autorizzazione.';return}
+  status.textContent='Lettura locale e diagnostica in corso…';preview.textContent='';
+  try{
+    const raw=localStorage.getItem('witchGrimoirePagesV1');
+    let pages=[];
+    if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))pages=parsed}
+    const dayResult=await readDays(),days=dayResult.days;
+    const localKeys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter(Boolean).sort();
+    const result={
+      consultazioneLocale:new Date().toISOString(),
+      diagnostica:{
+        origine:location.origin,
+        chiaveDiarioPresente:raw!==null,
+        tipoDatoDiario:raw===null?'assente':Array.isArray(JSON.parse(raw))?'array':'formato diverso da array',
+        chiaviLocalStorage:localKeys,
+        databasePlannerPresente:dayResult.databaseFound,
+        archivioDaysPresente:dayResult.storeFound,
+        archiviDatabase:dayResult.databaseNames,
+        archiviNelDatabase:dayResult.storeNames
+      },
+      archiviDiario:pages,
+      giornatePlanner:days
+    };
+    preview.textContent=JSON.stringify(result,null,2);
+    status.textContent='Diagnostica completata: '+pages.length+' pagine e '+days.length+' giornate trovate. Nessun dato è stato modificato o inviato.';
+  }catch(error){status.textContent='Non è stato possibile leggere gli archivi: '+error.message;preview.textContent='Nessun dato mostrato.'}
+};
 $('clearGrimoire').onclick=()=>{$('grimoirePreview').textContent='Nessun contenuto caricato.';$('grimoireStatus').textContent='Anteprima cancellata.';$('grimoireConsent').checked=false};
 updateMode();
 })();
