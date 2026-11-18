@@ -130,8 +130,8 @@ export default {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
-        max_tokens: 4096,
-        temperature: 0.65,
+        max_tokens: 1024,
+        temperature: 0.35,
       });
       const reply = extractReply(result);
       if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale. Riprova tra poco." }, 502);
