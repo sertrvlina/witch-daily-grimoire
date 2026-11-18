@@ -346,20 +346,29 @@ export default {
     catch { return json({ error: "Corpo JSON non valido." }, 400); }
 
 
-    if (body.action === "image_edit") {
+    if (body.action === "image_edit" || body.action === "image_generate") {
       const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 4000) : "";
-      const source = typeof body.image === "string" ? body.image : "";
-      if (!prompt) return json({ error: "Descrivi la modifica che desideri." }, 400);
-      if (!source || source.length > 1500000) return json({ error: "Immagine mancante o troppo grande. Riprova con un'immagine più leggera." }, 413);
-      const match = source.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
-      if (!match) return json({ error: "Formato immagine non valido. Usa JPEG, PNG o WebP." }, 400);
+      const sources = Array.isArray(body.images)
+        ? body.images
+        : typeof body.image === "string" && body.image ? [body.image] : [];
+      if (!prompt) return json({ error: "Descrivi l'immagine o la modifica che desideri." }, 400);
+      if (sources.length > 4) return json({ error: "Puoi usare al massimo quattro immagini di riferimento." }, 400);
+      if (body.action === "image_edit" && !sources.length) return json({ error: "Carica almeno un'immagine da modificare." }, 400);
+      if (sources.some(source => typeof source !== "string" || source.length > 500000) ||
+          sources.reduce((total, source) => total + (typeof source === "string" ? source.length : 0), 0) > 1500000) {
+        return json({ error: "Una o più immagini sono troppo grandi. Riprova con immagini più leggere." }, 413);
+      }
       try {
-        const binary = atob(match[2]);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
         const form = new FormData();
         form.append("prompt", prompt);
-        form.append("input_image_0", new Blob([bytes], { type: "image/" + match[1] }), "reference." + (match[1] === "jpeg" ? "jpg" : match[1]));
+        for (let index = 0; index < sources.length; index++) {
+          const match = sources[index].match(/^data:image\\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+          if (!match) return json({ error: "Formato immagine non valido. Usa JPEG, PNG o WebP." }, 400);
+          const binary = atob(match[2]);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          form.append("input_image_" + index, new Blob([bytes], { type: "image/" + match[1] }), "reference-" + (index + 1) + "." + (match[1] === "jpeg" ? "jpg" : match[1]));
+        }
         const outputSize = body.outputSize === 1024 ? 1024 : 512;
         form.append("width", String(outputSize));
         form.append("height", String(outputSize));
@@ -380,13 +389,13 @@ export default {
           for (let i = 0; i < data.length; i += 0x8000) binaryOut += String.fromCharCode(...data.subarray(i, i + 0x8000));
           image = "data:image/png;base64," + btoa(binaryOut);
         } else return json({ error: "Formato immagine restituito dal modello non riconosciuto." }, 502);
-        // Estimates use Cloudflare model tile pricing converted at $0.011 per 1,000 Neurons.
-        return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, estimatedNeurons: outputSize === 1024 ? 109.73 : 31.45 }, 200);
+        const outputTiles = outputSize === 1024 ? 4 : 1;
+        const estimatedNeurons = Math.round((sources.length * 5.36 + outputTiles * 26.09) * 100) / 100;
+        return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, inputImages: sources.length, estimatedNeurons }, 200);
       } catch (error) {
-        return json({ error: "Modifica immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
+        return json({ error: "Elaborazione immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
       }
     }
-
 
     if (body.action === "analyze_document") {
       const documentText = typeof body.text === "string" ? body.text.slice(0, 50000).trim() : "";
