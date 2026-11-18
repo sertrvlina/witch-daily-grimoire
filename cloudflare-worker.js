@@ -54,6 +54,30 @@ export default {
       });
     }
     if (request.method === "GET") {
+      if (new URL(request.url).searchParams.get("test") === "1") {
+        if (!env.AI || typeof env.AI.run !== "function") {
+          return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
+        }
+        try {
+          const result = await env.AI.run(MODEL, {
+            messages: [
+              { role: "system", content: "Rispondi in italiano con una sola frase breve." },
+              { role: "user", content: "Conferma che il collegamento AI funziona." }
+            ],
+            max_tokens: 80,
+            temperature: 0.2
+          });
+          const reply = typeof result?.response === "string"
+            ? result.response
+            : typeof result?.choices?.[0]?.message?.content === "string"
+              ? result.choices[0].message.content
+              : "";
+          if (!reply) return json({ status: "error", stage: "model_response", result }, 502);
+          return json({ status: "online", service: "The Oracle", aiBinding: true, aiTest: "passed", reply }, 200);
+        } catch (error) {
+          return json({ status: "error", stage: "workers_ai", message: String(error?.message || error) }, 502);
+        }
+      }
       return json({
         status: "online",
         service: "The Oracle",
