@@ -132,17 +132,18 @@ finally{button.disabled=false}
 }
 $('analyzeMemory').onclick=analyzeConversation;
 function buildPersonalProfile(){
-if(!memory.length)return '';
+if(!memory.length&&!progressEntries.length)return '';
 const groups={};
 for(const item of memory){const key=CATEGORIES[item.category]||CATEGORIES.interessi;(groups[key] ||= []).push(item.text)}
 const sections=Object.entries(groups).map(([label,items])=>'## '+label+'\n'+items.map(value=>'• '+value).join('\n'));
-const progressSection=progressEntries.length?'\n\n## Diario evolutivo e stato dei percorsi\n'+progressEntries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(item=>'• '+(item.date||'Data non indicata')+' · '+item.title+' ['+({idea:'da iniziare',in_corso:'in corso',completato:'completato',in_pausa:'in pausa'}[item.status]||item.status)+']'+(item.notes?' — '+item.notes:'')).join('\n'):'';\nreturn 'PROFILO PERSONALE · THE ORACLE\nAggiornato: '+new Date().toLocaleDateString('it-IT')+'\n\n'+sections.join('\n\n')+progressSection+'\n\nISTRUZIONI PER LUCILLA\nUsa queste informazioni come contesto dichiarato dall’utente. Dai priorità alle informazioni più recenti e chiedi conferma quando un dato potrebbe essere cambiato. Non inventare dettagli e non trattare questo profilo come immutabile.';
+const progressSection=progressEntries.length?'\n\n## Diario evolutivo e stato dei percorsi\n'+progressEntries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(item=>'• '+(item.date||'Data non indicata')+' · '+item.title+' ['+({idea:'da iniziare',in_corso:'in corso',completato:'completato',in_pausa:'in pausa'}[item.status]||item.status)+']'+(item.notes?' — '+item.notes:'')).join('\n'):'';
+return 'PROFILO PERSONALE · THE ORACLE\nAggiornato: '+new Date().toLocaleDateString('it-IT')+'\n\n'+sections.join('\n\n')+progressSection+'\n\nISTRUZIONI PER LUCILLA\nUsa queste informazioni come contesto dichiarato dall’utente. Dai priorità alle informazioni più recenti e chiedi conferma quando un dato potrebbe essere cambiato. Non inventare dettagli e non trattare questo profilo come immutabile.';
 }
 $('generateProfile').onclick=()=>{
 const generated=buildPersonalProfile();
 if(!generated){$('profileStatus').textContent='Aggiungi o approva almeno un ricordo prima di generare il profilo.';return}
 $('personalProfile').value=generated;
-$('profileStatus').textContent='Bozza generata dai '+memory.length+' ricordi salvati. Puoi modificarla prima di salvarla.';
+$('profileStatus').textContent='Bozza generata da '+memory.length+' ricordi e '+progressEntries.length+' voci del diario. Puoi modificarla prima di salvarla.';
 };
 $('saveProfile').onclick=()=>{
 personalProfile=$('personalProfile').value.trim();
