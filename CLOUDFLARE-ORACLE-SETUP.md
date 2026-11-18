@@ -1,18 +1,32 @@
-# Attivare The Oracle su Cloudflare
+# The Oracle · configurazione e regole di costo
 
-Il codice del Worker è in `cloudflare-worker.js`.
+Il Worker è definito in `cloudflare-worker.js` e usa il binding Workers AI denominato `AI`.
 
-## 1. Binding AI
-Nel pannello Cloudflare apri il Worker già creato. In Settings / Bindings aggiungi **Workers AI** con variabile **AI** e salva.
+## Endpoint
+`https://proud-scene-d65athe-oracle.martinabianco2007.workers.dev`
 
-## 2. Inserire il codice
-Apri il Worker, entra in Edit code, sostituisci tutto il codice Hello World con il contenuto integrale di `cloudflare-worker.js`, quindi salva e fai Deploy.
+## Deploy
+Il repository è collegato a Cloudflare Workers Builds. Le modifiche salvate sul branch `main` sono destinate al deploy automatico tramite la build collegata. Non sostituire manualmente il Worker con una versione precedente: si rischia di annullare le funzioni più recenti. Un commit GitHub conferma il salvataggio del codice, non da solo il completamento del deploy Cloudflare.
 
-## 3. URL
-Endpoint previsto: `https://proud-scene-d65athe-oracle.martinabianco2007.workers.dev`
+## Piano gratuito: regola obbligatoria
+- Mantenere Cloudflare Workers sul piano **Free**.
+- Non attivare Workers Paid, non aggiungere crediti prepagati e non configurare servizi a pagamento.
+- Workers AI sul piano Free dispone di una quota gratuita giornaliera di 10.000 Neurons. La quota si rinnova ogni giorno alle 00:00 UTC.
+- Quando la quota gratuita è esaurita, le richieste AI sul piano Free vengono rifiutate fino al rinnovo. Non effettuare upgrade per superare il limite.
+- Chat, analisi documenti e generazione/modifica immagini condividono la quota Workers AI.
 
-## 4. Piano gratuito
-Il modello `@cf/zai-org/glm-4.7-flash` è indicato da Cloudflare come disponibile nel piano Workers Free. Workers AI include 10.000 Neurons al giorno senza costo. Superata la quota, sul piano Free le richieste vengono rifiutate: non passare a Workers Paid e non aggiungere metodi di pagamento.
+## Consumo indicativo immagini
+Il modello usato è `@cf/black-forest-labs/flux-2-klein-4b`.
+- Risultato 512 × 512: circa 31,42 Neurons per immagine (input e output).
+- Risultato 1024 × 1024: circa 109,57 Neurons per immagine (input e output).
+- Lo studio immagini seleziona 512 × 512 come impostazione predefinita per contenere il consumo.
+- Le stime sono indicative e non includono il consumo di chat o altre funzioni.
+
+## Funzioni
+- Chat con Lucilla tramite `@cf/zai-org/glm-4.7-flash`.
+- Analisi di documenti: il testo viene estratto nel browser; soltanto dopo consenso viene inviato al Worker.
+- Studio immagini: l'immagine viene ridimensionata nel browser; viene inviata al Worker solo dopo consenso esplicito. È disponibile la risoluzione 512 o 1024.
+- Memoria, archivi e dati del Grimorio restano locali, salvo condivisione esplicita dall'interfaccia.
 
 ## Privacy
-Il Worker non salva chat o memoria e non registra i contenuti. Il sito invia il messaggio solo dopo il consenso cloud. Le note personali vengono inviate solo con la seconda casella di consenso. Gli archivi del Grimorio non vengono letti né trasmessi dal Worker.
+Il Worker non implementa un archivio persistente di chat o memoria. Il sito invia contenuti remoti soltanto quando l'utente attiva il consenso corrispondente. L'endpoint accetta richieste POST provenienti dal dominio GitHub Pages del progetto.
