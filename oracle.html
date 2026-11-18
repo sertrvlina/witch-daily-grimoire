@@ -89,8 +89,9 @@ const category=document.createElement('select');
 Object.entries(CATEGORIES).forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;category.append(option)});
 category.value=CATEGORIES[item.category]?item.category:'interessi';
 const field=document.createElement('textarea');field.rows=3;field.value=String(item.text||'').slice(0,700);field.setAttribute('aria-label','Modifica il ricordo proposto');
+const exactMatch=item.action==='update'&&item.existingText?memory.find(m=>m.text===item.existingText):null;
 const match=memory.map(m=>({item:m,score:memorySimilarity(m.text,item.text)})).sort((a,b)=>b.score-a.score)[0];
-const possibleMatch=match&&match.score>=0.72?match.item:null;
+const possibleMatch=exactMatch||(match&&match.score>=0.72?match.item:null);
 if(possibleMatch){const note=document.createElement('div');note.className='hint';note.textContent='Possibile aggiornamento di un ricordo già salvato: “'+possibleMatch.text.slice(0,150)+'”';card.append(note)}
 const actions=document.createElement('div');actions.className='memoryactions';
 const approve=document.createElement('button');approve.textContent='Approva e salva';
@@ -110,7 +111,7 @@ const history=chat.slice(-8).filter(x=>x&&(x.role==='user'||x.role==='assistant'
 if(!history.some(x=>x.role==='user')){status.textContent='Non ci sono ancora messaggi sufficienti da analizzare.';return}
 button.disabled=true;status.textContent='Lucilla sta individuando eventuali ricordi utili…';
 try{
-const response=await fetch($('endpoint').value.trim(),{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json'},body:JSON.stringify({action:'suggest_memories',history})});
+const response=await fetch($('endpoint').value.trim(),{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json'},body:JSON.stringify({action:'suggest_memories',history,existingMemory:$('memoryConsent').checked?memory.map(m=>({category:m.category,text:m.text})):[]})});
 const raw=await response.text();let result={};try{result=JSON.parse(raw)}catch{}
 if(!response.ok)throw new Error(result.error||result.message||'HTTP '+response.status);
 if(!Array.isArray(result.suggestions))throw new Error('Formato delle proposte non riconosciuto.');
