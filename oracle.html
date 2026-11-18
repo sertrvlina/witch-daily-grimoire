@@ -139,11 +139,13 @@ if(!streamFinished)throw new Error('Lo streaming si è interrotto prima del segn
 if(!streamedText.trim())throw new Error('Il modello non ha restituito testo.');
 persist();
 }else{
+let rawResponse='';
+try{rawResponse=await response.text()}catch{}
 let result={};
-try{result=await response.json()}catch{}
-if(!response.ok)throw new Error(result.detail||result.error||result.message||('HTTP '+response.status));
-const answer=typeof result.reply==='string'?result.reply:typeof result.message==='string'?result.message:null;
-if(!answer)throw new Error(result.error||'Risposta backend non riconosciuta.');
+try{result=rawResponse?JSON.parse(rawResponse):{}}catch{}
+if(!response.ok)throw new Error(result.detail||result.error||result.message||('HTTP '+response.status+' · '+rawResponse.slice(0,500)));
+const answer=typeof result.reply==='string'?result.reply:typeof result.message==='string'?result.message:typeof result.response==='string'?result.response:null;
+if(!answer)throw new Error('Risposta backend non riconosciuta (HTTP '+response.status+', '+(contentType||'tipo contenuto sconosciuto')+'). Dettagli: '+rawResponse.slice(0,700));
 addBubble('assistant',answer);
 }
 }catch(err){
