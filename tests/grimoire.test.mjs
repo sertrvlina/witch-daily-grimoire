@@ -19,7 +19,7 @@ function request(body, origin = ORIGIN) {
 
 test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
-  for (const file of ["index.html", "oracle.html", "image-studio.html", "document-studio.html", "life-tools.html", "sound-tools.html"]) {
+  for (const file of ["index.html", "oracle.html", "image-studio.html", "document-studio.html", "life-tools.html", "sound-tools.html", "bpd-support.html"]) {
     const html = await read(file);
     const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
     for (const [, source] of scripts) {
