@@ -20,7 +20,7 @@ function request(body, origin = ORIGIN) {
 test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
   const gardenPage = await read("life-garden.html");
-  for (const feature of ["id=\"calendar\"", "id=\"money\"", "id=\"study\"", "id=\"care\"", "id=\"people\"", "id=\"skills\"", "id=\"review\"", "witchGardenLifeV1"]) assert.ok(gardenPage.includes(feature), "life garden missing " + feature);
+  for (const feature of ["id=\"calendar\"", "id=\"money\"", "id=\"study\"", "id=\"care\"", "id=\"people\"", "id=\"skills\"", "id=\"review\"", "id=\"moon\"", "id=\"library\"", "id=\"atelier\"", "id=\"atlas\"", "id=\"places\"", "id=\"timeline\"", "witchGardenLifeV1", "phaseInfo", "witch-garden-life-v1"]) assert.ok(gardenPage.includes(feature), "life garden missing " + feature);
   const supportPage = await read("bpd-support.html");
   for (const feature of ["id=\"distress\"", "saveSenses", "saveUrge", "piano personale", "DEAR MAN", "id=\"refuge\"", "id=\"lowday\"", "id=\"identity\"", "id=\"letters\"", "id=\"resources\"", "saveLetter", "renderLetters"]) {
     assert.ok(supportPage.includes(feature), "support page missing " + feature);
