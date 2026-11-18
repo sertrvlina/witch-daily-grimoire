@@ -172,6 +172,26 @@ if(editingMemoryId){const existing=memory.find(x=>x.id===editingMemoryId);if(exi
 else{memory.unshift({id:makeId(),category:$('memoryCategory').value,text:t,created:new Date().toISOString(),updated:null});$('memoryStatus').textContent='Ricordo salvato solo su questo dispositivo.'}
 resetMemoryEditor();persist();renderMemory();
 };
+function saveDailyPlanFromReply(rawText){
+const match=rawText.match(/\[\[LUCILLA_DAILY_PLAN\]\]([\s\S]*?)\[\[\/LUCILLA_DAILY_PLAN\]\]/);
+if(!match)return {text:rawText,plan:null};
+try{
+const parsed=JSON.parse(match[1].trim());
+if(!parsed||typeof parsed.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(parsed.date)||!Array.isArray(parsed.items)||!parsed.items.length||parsed.items.length>30)throw new Error('Piano non valido');
+const items=parsed.items.map(item=>{
+if(!item||typeof item.title!=='string'||!item.title.trim())return null;
+const time=typeof item.time==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item.time)?item.time:'';
+return {id:makeId(),time,title:item.title.trim().slice(0,180),duration:Number.isFinite(Number(item.duration))?Math.max(0,Math.min(1440,Number(item.duration))):0,category:typeof item.category==='string'?item.category.slice(0,40):'altro',notes:typeof item.notes==='string'?item.notes.slice(0,500):'',priority:item.priority==='essenziale'?'essenziale':'facoltativa',completed:false};
+}).filter(Boolean);
+if(!items.length)throw new Error('Il piano non contiene attività valide');
+const plan={date:parsed.date,title:typeof parsed.title==='string'&&parsed.title.trim()?parsed.title.trim().slice(0,120):'La mia giornata',summary:typeof parsed.summary==='string'?parsed.summary.slice(0,600):'',items,updatedAt:new Date().toISOString(),source:'Lucilla'};
+const key='lucillaDailyPlansV1';let plans=[];try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))plans=saved}catch{}
+const index=plans.findIndex(x=>x&&x.date===plan.date);
+if(index>=0){const old=plans[index];plan.items=items.map((item,i)=>{const previous=old.items?.find(x=>x.time===item.time&&x.title===item.title);return previous?{...item,id:previous.id,completed:!!previous.completed}:item});plans[index]=plan}else plans.push(plan);
+plans.sort((a,b)=>b.date.localeCompare(a.date));localStorage.setItem(key,JSON.stringify(plans.slice(0,90)));
+return {text:rawText.replace(match[0],'').trim(),plan};
+}catch(error){console.warn('Piano di Lucilla non salvato:',error);return {text:rawText.replace(match[0],'').trim(),plan:null}}
+}
 async function send(){
 const text=$('message').value.trim();
 if(!text||$('send').disabled)return;
@@ -273,6 +293,10 @@ buffer+=decoder.decode();
 if(buffer.trim())processFrame(buffer);
 if(!streamFinished)throw new Error('Lo streaming si è interrotto prima del segnale di completamento.');
 if(!streamedText.trim())throw new Error('Il modello non ha restituito testo.');
+const processedPlan=saveDailyPlanFromReply(streamedText);
+streamedText=processedPlan.text;
+if(streamedItem){streamedItem.text=streamedText;if(streamedContent)streamedContent.textContent=streamedText;}
+if(processedPlan.plan)addBubble('assistant','☾ Ho inserito il programma del '+new Date(processedPlan.plan.date+'T12:00:00').toLocaleDateString('it-IT')+' nel Grimorio. Lo trovi nella sezione “Agenda di Lucilla” del Giardino della Vita.');
 persist();
 }else{
 let rawResponse='';
@@ -282,7 +306,9 @@ try{result=rawResponse?JSON.parse(rawResponse):{}}catch{}
 if(!response.ok)throw new Error(result.detail||result.error||result.message||('HTTP '+response.status+' · '+rawResponse.slice(0,500)));
 const answer=typeof result.reply==='string'?result.reply:typeof result.message==='string'?result.message:typeof result.response==='string'?result.response:null;
 if(!answer)throw new Error('Risposta backend non riconosciuta (HTTP '+response.status+', '+(contentType||'tipo contenuto sconosciuto')+'). Dettagli: '+rawResponse.slice(0,700));
-addBubble('assistant',answer);
+const processedPlan=saveDailyPlanFromReply(answer);
+addBubble('assistant',processedPlan.text);
+if(processedPlan.plan)addBubble('assistant','☾ Ho inserito il programma del '+new Date(processedPlan.plan.date+'T12:00:00').toLocaleDateString('it-IT')+' nel Grimorio. Lo trovi nella sezione “Agenda di Lucilla” del Giardino della Vita.');
 }
 }catch(err){
 if(streamedItem&&streamedText){
@@ -328,9 +354,10 @@ async function collectGrimoireData(){
   let pages=[];
   if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed))pages=parsed}
   const dayResult=await readDays(),days=dayResult.days;
+  let dailyPlans=[];try{const saved=JSON.parse(localStorage.getItem('lucillaDailyPlansV1')||'[]');if(Array.isArray(saved))dailyPlans=saved}catch{}
   const localKeys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter(Boolean).sort();
   return {
-    pages,days,
+    pages,days,dailyPlans,
     diagnostics:{
       origin:location.origin,
       diaryKeyPresent:raw!==null,
@@ -353,7 +380,8 @@ $('readGrimoire').onclick=async()=>{
       consultazioneLocale:new Date().toISOString(),
       diagnostica:grimoireSnapshot.diagnostics,
       archiviDiario:grimoireSnapshot.pages,
-      giornatePlanner:grimoireSnapshot.days
+      giornatePlanner:grimoireSnapshot.days,
+      programmiGiornalieri:grimoireSnapshot.dailyPlans
     };
     preview.textContent=JSON.stringify(result,null,2);
     status.textContent='Lettura completata: '+grimoireSnapshot.pages.length+' pagine e '+grimoireSnapshot.days.length+' giornate. Dati ancora locali.';
