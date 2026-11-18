@@ -287,7 +287,8 @@ async function streamChat(env, messages, maxTokens = 1536) {
         }
       } catch (error) {
         if (!cancelled) {
-          const detail = String(error?.message || error).slice(0, 800);\n          const quotaOrBilling = /quota|neurons|daily.{0,30}(limit|quota)|(limit|quota).{0,30}daily|workers paid|billing|upgrade/i.test(detail);\n          controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: quotaOrBilling ? "La quota gratuita giornaliera potrebbe essere esaurita. Nessun upgrade o pagamento viene avviato: riprova dopo il rinnovo." : detail }) + "\n\n"));
+          const detail = String(error?.message || error).slice(0, 800);
+          const quotaOrBilling = /quota|neurons|daily.{0,30}(limit|quota)|(limit|quota).{0,30}daily|workers paid|billing|upgrade/i.test(detail);\n          controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: quotaOrBilling ? "La quota gratuita giornaliera potrebbe essere esaurita. Nessun upgrade o pagamento viene avviato: riprova dopo il rinnovo." : detail }) + "\n\n"));
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         }
