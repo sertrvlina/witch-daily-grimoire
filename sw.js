@@ -1,5 +1,5 @@
 
-const CACHE = 'witch-grimoire-v18';
+const CACHE = 'witch-grimoire-v19';
 
 const FILES = [
   './',
@@ -8,6 +8,7 @@ const FILES = [
   './image-studio.html',
   './document-studio.html',
   './life-tools.html',
+  './life-garden.html',
   './sound-tools.html',
   './bpd-support.html',
   './manifest.webmanifest',
