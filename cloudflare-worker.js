@@ -1,0 +1,111 @@
+/**
+ * The Oracle - Cloudflare Worker
+ * Required binding: Workers AI named AI
+ * Model: @cf/zai-org/glm-4.7-flash
+ *
+ * No chat or memory is persisted or logged by this Worker.
+ * The browser sends only data the user explicitly chooses to share.
+ */
+const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
+const MODEL = "@cf/zai-org/glm-4.7-flash";
+const MAX_MESSAGE_CHARS = 12000;
+const MAX_MEMORY_CHARS = 6000;
+
+const SYSTEM_PROMPT = `Sei The Oracle, l'assistente personale universale del Witch's Daily Grimoire.
+Rispondi in italiano, salvo richiesta esplicita di un'altra lingua. Sei competente in cultura,
+studio, organizzazione, creatività, tecnologia, lavoro, benessere, relazioni, ricerca e decisioni pratiche.
+Adatta profondità e linguaggio alla persona e al suo livello.
+
+Metodo:
+- Comprendi l'obiettivo e rispondi in modo concreto, ordinato e utile.
+- Non inventare fatti, fonti, capacità o risultati. Distingui fatti, ipotesi e opinioni.
+- Se una risposta dipende da informazioni attuali, segnala che occorre verificarle con fonti aggiornate.
+- Spiega i passaggi quando servono; proponi alternative realistiche e chiarisci pro e contro.
+- Per salute, diritto, finanza e sicurezza usa prudenza, non formulare diagnosi o garanzie e indica quando serve un professionista.
+- Rispetta autonomia, privacy e sensibilità della persona. Non giudicare e non manipolare.
+- Non affermare di aver compiuto azioni esterne che non hai realmente eseguito.
+- Usa un tono caldo, intelligente, naturale e chiaro. Evita risposte vaghe, ripetitive o inutilmente prolisse.
+Il nome evocativo e l'estetica del Grimorio sono una cornice creativa: non presentare credenze esoteriche,
+astrologiche o spirituali come fatti scientifici. Puoi esplorarle come tradizioni, simboli o pratiche personali.`;
+
+function json(data, status) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+      "Vary": "Origin",
+    },
+  });
+}
+
+export default {
+  async fetch(request, env) {
+    const origin = request.headers.get("Origin") || "";
+    if (request.method === "OPTIONS") {
+      if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Max-Age": "86400",
+          "Vary": "Origin",
+        },
+      });
+    }
+    if (origin !== ALLOWED_ORIGIN) return json({ error: "Origine non autorizzata." }, 403);
+    if (request.method !== "POST") return json({ error: "Metodo non consentito. Usa POST." }, 405);
+    if (!env.AI || typeof env.AI.run !== "function") {
+      return json({ error: "Binding Workers AI non configurato. Aggiungi il binding AI." }, 503);
+    }
+
+    const contentLength = Number(request.headers.get("Content-Length") || 0);
+    if (contentLength > 25000) return json({ error: "Richiesta troppo grande." }, 413);
+
+    let body;
+    try { body = await request.json(); }
+    catch { return json({ error: "Corpo JSON non valido." }, 400); }
+
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const memory = typeof body.memory === "string"
+      ? body.memory.slice(0, MAX_MEMORY_CHARS)
+      : Array.isArray(body.memory)
+        ? body.memory.filter(x => typeof x === "string").join("\n").slice(0, MAX_MEMORY_CHARS)
+        : "";
+
+    if (!message) return json({ error: "Scrivi un messaggio prima di inviarlo." }, 400);
+    if (message.length > MAX_MESSAGE_CHARS) {
+      return json({ error: "Il messaggio è troppo lungo. Riducilo e riprova." }, 413);
+    }
+
+    const userContent = memory
+      ? "Note personali che l'utente ha scelto esplicitamente di condividere per questa richiesta:\n" +
+        memory + "\n\nMessaggio dell'utente:\n" + message
+      : message;
+
+    try {
+      const result = await env.AI.run(MODEL, {
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userContent },
+        ],
+        max_tokens: 1200,
+        temperature: 0.65,
+      });
+      const reply = typeof result?.response === "string"
+        ? result.response
+        : typeof result?.choices?.[0]?.message?.content === "string"
+          ? result.choices[0].message.content
+          : "";
+      if (!reply) return json({ error: "Il modello non ha restituito una risposta leggibile." }, 502);
+      return json({ reply }, 200);
+    } catch {
+      return json({
+        error: "Il servizio AI non è riuscito a completare la richiesta. Potrebbe essere temporaneamente non disponibile o aver raggiunto la quota gratuita giornaliera.",
+      }, 502);
+    }
+  },
+};
