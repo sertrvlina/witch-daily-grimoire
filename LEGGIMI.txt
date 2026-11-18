@@ -1,15 +1,29 @@
 THE WITCH'S DAILY GRIMOIRE
 
-Contenuto:
-- index.html: planner
+Pagine:
+- index.html: planner e archivi del Grimorio
+- oracle.html: chat con The Oracle / Lucilla, memoria personale locale e diario evolutivo
+- image-studio.html: creazione di immagini da testo e modifica con fino a quattro immagini di riferimento
+- document-studio.html: lettura, modifica, analisi consensuale ed esportazione di documenti
 - manifest.webmanifest e sw.js: installazione PWA e cache offline
 - icon-192.png / icon-512.png: icone
 
-IMPORTANTE:
-Per installare una PWA su iPhone, i file devono essere pubblicati su un indirizzo HTTPS.
-Il planner salva i dati localmente nel database IndexedDB di Safari, non su un server.
-Non cancellare i dati/siti web di Safari e fai periodicamente un Backup completo.
-Per installare: apri l'indirizzo in Safari > Condividi > Aggiungi alla schermata Home.
+DATI E PRIVACY:
+- Planner, archivi, memoria e diario evolutivo sono salvati nel browser/dispositivo.
+- La chat e le funzioni AI inviano dati al Worker soltanto dopo il consenso previsto dall'interfaccia.
+- Lo Studio immagini ridimensiona le copie sul dispositivo prima dell'invio; puoi creare da testo senza caricare immagini.
+- Lo Studio documenti estrae il testo nel browser; il file originale non viene caricato per l'analisi.
+- Esegui periodicamente un Backup completo e conserva una copia fuori dal browser.
 
-Il font decorativo usa Google Fonts quando c'è connessione; il planner funziona anche senza,
-con font di riserva. Il service worker memorizza i file dell'app per l'uso offline dopo il primo caricamento.
+PIANO GRATUITO:
+- Le funzioni AI usano la quota gratuita Workers AI di Cloudflare, se l'account resta sul piano Workers Free.
+- La quota gratuita indicata è di 10.000 Neurons al giorno e si rinnova alle 00:00 UTC.
+- Se la quota è esaurita, le richieste AI vengono rifiutate fino al rinnovo.
+- Non attivare Workers Paid, crediti prepagati o servizi a pagamento. Il codice del Grimorio non esegue upgrade o pagamenti.
+- La disponibilità delle quote e le condizioni dei fornitori possono cambiare nel tempo; controlla il pannello di fatturazione prima di modificare il piano.
+
+INSTALLAZIONE:
+Per installare una PWA su iPhone, i file devono essere pubblicati su un indirizzo HTTPS.
+Apri l'indirizzo in Safari > Condividi > Aggiungi alla schermata Home.
+Il service worker memorizza i file dell'app per l'uso offline dopo il primo caricamento.
+Le funzioni che usano AI, le librerie documentali esterne e i font remoti richiedono una connessione Internet.
