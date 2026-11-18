@@ -6,7 +6,7 @@
  * No chat or memory is persisted or logged by this Worker.
  * The browser sends only data the user explicitly chooses to share.
  */
-const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
+const ALLOWED_ORIGIN = "*";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
@@ -42,21 +42,24 @@ function json(data, status) {
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get("Origin") || "";
     if (request.method === "OPTIONS") {
-      if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
       return new Response(null, {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Max-Age": "86400",
-          "Vary": "Origin",
         },
       });
     }
-    if (origin !== ALLOWED_ORIGIN) return json({ error: "Origine non autorizzata." }, 403);
+    if (request.method === "GET") {
+      return json({
+        status: "online",
+        service: "The Oracle",
+        aiBinding: !!env.AI && typeof env.AI.run === "function",
+      }, 200);
+    }
     if (request.method !== "POST") return json({ error: "Metodo non consentito. Usa POST." }, 405);
     if (!env.AI || typeof env.AI.run !== "function") {
       return json({ error: "Binding Workers AI non configurato. Aggiungi il binding AI." }, 503);
