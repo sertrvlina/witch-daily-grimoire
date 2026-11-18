@@ -84,19 +84,38 @@ async function streamChat(env, messages, maxTokens = 1536) {
       chat_template_kwargs: { enable_thinking: false },
       stream: true,
     });
-  } catch (error) {
-    return json({
-      error: "Workers AI non è riuscito ad avviare la generazione.",
-      stage: "workers_ai_stream_start",
-      detail: String(error?.message || error).slice(0, 1000),
-    }, 502);
+  } catch (streamError) {
+    // Compatibility fallback: some model/runtime responses may reject streaming.
+    try {
+      const result = await env.AI.run(MODEL, {
+        messages,
+        max_tokens: maxTokens,
+        temperature: 0.2,
+        chat_template_kwargs: { enable_thinking: false },
+      });
+      const reply = extractReply(result);
+      if (reply) return json({ reply, mode: "non_stream_fallback" }, 200);
+      return json({ error: "Il modello non ha restituito testo.", stage: "workers_ai_fallback_empty", detail: String(streamError?.message || streamError).slice(0, 600) }, 502);
+    } catch (fallbackError) {
+      return json({ error: "Non è stato possibile avviare né lo streaming né la risposta standard.", stage: "workers_ai_fallback", detail: String(fallbackError?.message || fallbackError).slice(0, 1000) }, 502);
+    }
   }
 
+  if (upstream && upstream.body && typeof upstream.getReader !== "function") upstream = upstream.body;
   if (!upstream || typeof upstream.getReader !== "function") {
-    return json({
-      error: "Workers AI non ha restituito uno stream leggibile.",
-      stage: "workers_ai_stream_format",
-    }, 502);
+    try {
+      const result = await env.AI.run(MODEL, {
+        messages,
+        max_tokens: maxTokens,
+        temperature: 0.2,
+        chat_template_kwargs: { enable_thinking: false },
+      });
+      const reply = extractReply(result);
+      if (reply) return json({ reply, mode: "non_stream_fallback" }, 200);
+    } catch (fallbackError) {
+      return json({ error: "Workers AI non ha restituito uno stream leggibile e la modalità standard è fallita.", stage: "workers_ai_stream_format", detail: String(fallbackError?.message || fallbackError).slice(0, 1000) }, 502);
+    }
+    return json({ error: "Workers AI non ha restituito uno stream leggibile né una risposta standard.", stage: "workers_ai_stream_format" }, 502);
   }
 
   const encoder = new TextEncoder();
