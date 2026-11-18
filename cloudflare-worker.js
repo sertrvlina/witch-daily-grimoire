@@ -410,7 +410,7 @@ export default {
       const source = typeof body.image === "string" ? body.image : "";
       if (!prompt) return json({ error: "Descrivi la modifica che desideri." }, 400);
       if (!source || source.length > 1500000) return json({ error: "Immagine mancante o troppo grande. Riprova con un'immagine più leggera." }, 413);
-      const match = source.match(/^data:image\\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+      const match = source.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
       if (!match) return json({ error: "Formato immagine non valido. Usa JPEG, PNG o WebP." }, 400);
       try {
         const binary = atob(match[2]);
