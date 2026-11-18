@@ -47,7 +47,7 @@ const empty={events:[],money:[],studies:[],careHabits:[],careNotes:'',people:[],
 let state={...empty};
 try{state={...empty,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{}
 const $=id=>document.getElementById(id);
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
 const moneyFmt=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n)||0);
 const node=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('saveStatus').textContent='✧ Salvato su questo dispositivo · '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});renderDashboard()}catch{$('saveStatus').textContent='Spazio locale insufficiente: esporta un backup.'}}
