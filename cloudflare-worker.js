@@ -8,7 +8,7 @@
  */
 const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-lucilla-quality-2026-11-19";
+const BUILD_ID = "oracle-daily-plan-grimoire-2026-11-20";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
@@ -630,6 +630,7 @@ export default {
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "system", content: "RIFERIMENTO TEMPORALE AFFIDABILE PER QUESTA RISPOSTA: data e ora correnti in Italia (Europe/Rome): " + currentItalyDateTime + ". Usa questo riferimento per interpretare i riferimenti temporali dell'utente. Non confondere la data odierna con quella di un piano passato o futuro." },
+      { role: "system", content: "INTEGRAZIONE CON IL GRIMORIO: quando l'utente chiede esplicitamente di creare, riscrivere o aggiornare un programma giornaliero o una lista di attività con orari, prepara un piano realistico e personalizzato. In quel caso, oltre alla normale risposta leggibile, inserisci alla fine un blocco macchina ESATTAMENTE in questo formato, senza backtick e senza testo dentro il blocco oltre al JSON: [[LUCILLA_DAILY_PLAN]]{\"date\":\"YYYY-MM-DD\",\"title\":\"Titolo breve\",\"summary\":\"Sintesi facoltativa\",\"items\":[{\"time\":\"HH:MM\",\"title\":\"Attività\",\"duration\":30,\"category\":\"benessere|creativita|studio|casa|relazioni|pausa|altro\",\"notes\":\"Nota facoltativa\",\"priority\":\"essenziale|facoltativa\"}]}[[/LUCILLA_DAILY_PLAN]]. Usa date locali italiane esplicite e orari in formato 24 ore. Inserisci solo attività che hai davvero consigliato nel testo. Lascia intervalli realistici, pasti, pause e tempo libero; non riempire ogni minuto. Se mancano dettagli non essenziali, fai ipotesi prudenti e segnalale nel testo. Se la data non è chiara e cambia il piano, chiedi una sola conferma e NON emettere il blocco. Non emettere mai il blocco per una normale conversazione, una lista generica non giornaliera o quando l'utente non ha chiesto un piano. Il blocco viene salvato localmente dal sito, non su un server." },
       ...history,
       { role: "user", content: userContent },
     ];
