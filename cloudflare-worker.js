@@ -8,7 +8,7 @@
  */
 const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-free-safety-2026-11-18";
+const BUILD_ID = "oracle-free-guard-2026-11-18";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
@@ -321,69 +321,6 @@ export default {
       if (new URL(request.url).searchParams.get("test") === "build") {
         return json({ status: "online", service: "The Oracle", build: BUILD_ID, greetingRule: "deterministic-v1" }, 200);
       }
-      if (new URL(request.url).searchParams.get("test") === "stream") {
-        if (!env.AI || typeof env.AI.run !== "function") return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
-        return streamChat(env, [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: "Rispondi in italiano con una sola frase breve: conferma che lo streaming funziona." }
-        ], 96);
-      }
-      if (new URL(request.url).searchParams.get("test") === "chat") {
-        if (!env.AI || typeof env.AI.run !== "function") {
-          return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
-        }
-        try {
-          const result = await env.AI.run(MODEL, {
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: "Rispondi in italiano con una sola frase breve: conferma che puoi assistermi." }
-            ],
-            max_tokens: 256,
-            temperature: 0.2,
-            chat_template_kwargs: { enable_thinking: false }
-          });
-          const reply = extractReply(result);
-          if (!reply) {
-            return json({
-              status: "error",
-              stage: "chat_model_response",
-              finish_reason: result?.choices?.[0]?.finish_reason || null,
-              message: "Il modello non ha restituito testo finale usando il prompt completo."
-            }, 502);
-          }
-          return json({ status: "online", service: "The Oracle", aiBinding: true, chatTest: "passed", reply }, 200);
-        } catch (error) {
-          return json({ status: "error", stage: "chat_workers_ai", message: String(error?.message || error) }, 502);
-        }
-      }
-      if (new URL(request.url).searchParams.get("test") === "1") {
-        if (!env.AI || typeof env.AI.run !== "function") {
-          return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
-        }
-        try {
-          const result = await env.AI.run(MODEL, {
-            messages: [
-              { role: "system", content: "Rispondi in italiano con una sola frase breve. Non mostrare ragionamenti o passaggi interni." },
-              { role: "user", content: "Scrivi soltanto: Il collegamento AI funziona." }
-            ],
-            max_tokens: 1024,
-            temperature: 0.2,
-            chat_template_kwargs: { enable_thinking: false }
-          });
-          const reply = extractReply(result);
-          if (!reply) {
-            return json({
-              status: "error",
-              stage: "model_response",
-              finish_reason: result?.choices?.[0]?.finish_reason || null,
-              message: "Il modello è stato raggiunto ma non ha restituito testo finale. Il test verrà riprovato con un limite maggiore.",
-            }, 502);
-          }
-          return json({ status: "online", service: "The Oracle", aiBinding: true, aiTest: "passed", reply }, 200);
-        } catch (error) {
-          return json({ status: "error", stage: "workers_ai", message: String(error?.message || error) }, 502);
-        }
-      }
       return json({
         status: "online",
         service: "The Oracle",
@@ -443,7 +380,8 @@ export default {
           for (let i = 0; i < data.length; i += 0x8000) binaryOut += String.fromCharCode(...data.subarray(i, i + 0x8000));
           image = "data:image/png;base64," + btoa(binaryOut);
         } else return json({ error: "Formato immagine restituito dal modello non riconosciuto." }, 502);
-        return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, estimatedNeurons: outputSize === 1024 ? 109.57 : 31.42 }, 200);
+        // Estimates use Cloudflare model tile pricing converted at $0.011 per 1,000 Neurons.
+        return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, estimatedNeurons: outputSize === 1024 ? 109.73 : 31.45 }, 200);
       } catch (error) {
         return json({ error: "Modifica immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
       }
