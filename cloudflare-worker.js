@@ -6,9 +6,9 @@
  * No chat or memory is persisted or logged by this Worker.
  * The browser sends only data the user explicitly chooses to share.
  */
-const ALLOWED_ORIGIN = "*";
+const ALLOWED_ORIGIN = "https://sertrvlina.github.io";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
-const BUILD_ID = "oracle-creative-tools-2026-11-18";
+const BUILD_ID = "oracle-free-safety-2026-11-18";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
 const MAX_GRIMOIRE_CHARS = 14000;
@@ -313,6 +313,10 @@ export default {
         },
       });
     }
+    const requestOrigin = request.headers.get("Origin");
+    if (request.method === "POST" && requestOrigin !== ALLOWED_ORIGIN) {
+      return json({ error: "Origine non autorizzata." }, 403);
+    }
     if (request.method === "GET") {
       if (new URL(request.url).searchParams.get("test") === "build") {
         return json({ status: "online", service: "The Oracle", build: BUILD_ID, greetingRule: "deterministic-v1" }, 200);
@@ -419,8 +423,9 @@ export default {
         const form = new FormData();
         form.append("prompt", prompt);
         form.append("input_image_0", new Blob([bytes], { type: "image/" + match[1] }), "reference." + (match[1] === "jpeg" ? "jpg" : match[1]));
-        form.append("width", "1024");
-        form.append("height", "1024");
+        const outputSize = body.outputSize === 1024 ? 1024 : 512;
+        form.append("width", String(outputSize));
+        form.append("height", String(outputSize));
         const serialized = new Response(form);
         const result = await env.AI.run("@cf/black-forest-labs/flux-2-klein-4b", {
           multipart: {
@@ -438,7 +443,7 @@ export default {
           for (let i = 0; i < data.length; i += 0x8000) binaryOut += String.fromCharCode(...data.subarray(i, i + 0x8000));
           image = "data:image/png;base64," + btoa(binaryOut);
         } else return json({ error: "Formato immagine restituito dal modello non riconosciuto." }, 502);
-        return json({ image, model: "FLUX.2 Klein 4B" }, 200);
+        return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, estimatedNeurons: outputSize === 1024 ? 109.57 : 31.42 }, 200);
       } catch (error) {
         return json({ error: "Modifica immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
       }
