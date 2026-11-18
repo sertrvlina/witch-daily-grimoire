@@ -155,6 +155,20 @@ function extractReply(result) {
   return "";
 }
 
+function aiFailure(error, fallback, stage) {
+  const detail = String(error?.message || error || "Errore Workers AI");
+  const status = Number(error?.status || error?.statusCode || 0);
+  const quotaOrBilling = status === 429 ||
+    /quota|neurons|daily.{0,30}(limit|quota)|(limit|quota).{0,30}daily|workers paid|billing|upgrade/i.test(detail);
+  return json({
+    error: quotaOrBilling
+      ? "La quota gratuita giornaliera di Workers AI potrebbe essere esaurita o temporaneamente limitata. Nessun upgrade o pagamento viene avviato: riprova dopo il rinnovo."
+      : fallback,
+    stage,
+    detail: detail.slice(0, 600),
+  }, quotaOrBilling ? 429 : 502);
+}
+
 async function streamChat(env, messages, maxTokens = 1536) {
   let upstream;
   try {
@@ -178,7 +192,7 @@ async function streamChat(env, messages, maxTokens = 1536) {
       if (reply) return json({ reply, mode: "non_stream_fallback" }, 200);
       return json({ error: "Il modello non ha restituito testo.", stage: "workers_ai_fallback_empty", detail: String(streamError?.message || streamError).slice(0, 600) }, 502);
     } catch (fallbackError) {
-      return json({ error: "Non è stato possibile avviare né lo streaming né la risposta standard.", stage: "workers_ai_fallback", detail: String(fallbackError?.message || fallbackError).slice(0, 1000) }, 502);
+      return aiFailure(fallbackError, "Non è stato possibile avviare né lo streaming né la risposta standard.", "workers_ai_fallback");
     }
   }
 
@@ -194,7 +208,7 @@ async function streamChat(env, messages, maxTokens = 1536) {
       const reply = extractReply(result);
       if (reply) return json({ reply, mode: "non_stream_fallback" }, 200);
     } catch (fallbackError) {
-      return json({ error: "Workers AI non ha restituito uno stream leggibile e la modalità standard è fallita.", stage: "workers_ai_stream_format", detail: String(fallbackError?.message || fallbackError).slice(0, 1000) }, 502);
+      return aiFailure(fallbackError, "Workers AI non ha restituito uno stream leggibile e la modalità standard è fallita.", "workers_ai_stream_format");
     }
     return json({ error: "Workers AI non ha restituito uno stream leggibile né una risposta standard.", stage: "workers_ai_stream_format" }, 502);
   }
@@ -273,7 +287,7 @@ async function streamChat(env, messages, maxTokens = 1536) {
         }
       } catch (error) {
         if (!cancelled) {
-          controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: String(error?.message || error).slice(0, 800) }) + "\n\n"));
+          const detail = String(error?.message || error).slice(0, 800);\n          const quotaOrBilling = /quota|neurons|daily.{0,30}(limit|quota)|(limit|quota).{0,30}daily|workers paid|billing|upgrade/i.test(detail);\n          controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: quotaOrBilling ? "La quota gratuita giornaliera potrebbe essere esaurita. Nessun upgrade o pagamento viene avviato: riprova dopo il rinnovo." : detail }) + "\n\n"));
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         }
@@ -393,7 +407,7 @@ export default {
         const estimatedNeurons = Math.round((sources.length * 5.36 + outputTiles * 26.09) * 100) / 100;
         return json({ image, model: "FLUX.2 Klein 4B", width: outputSize, height: outputSize, inputImages: sources.length, estimatedNeurons }, 200);
       } catch (error) {
-        return json({ error: "Elaborazione immagine non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
+        return aiFailure(error, "Elaborazione immagine non riuscita.", "image_workers_ai");
       }
     }
 
@@ -415,7 +429,7 @@ export default {
         if (!reply) return json({ error: "Il modello non ha restituito un'analisi." }, 502);
         return json({ reply }, 200);
       } catch (error) {
-        return json({ error: "Analisi del documento non riuscita.", detail: String(error?.message || error).slice(0, 500) }, 502);
+        return aiFailure(error, "Analisi del documento non riuscita.", "document_workers_ai");
       }
     }
 
@@ -460,7 +474,7 @@ export default {
         ).map(item => ({ category: item.category, text: item.text.trim().slice(0, 700), action: item.action === "update" ? "update" : "new", existingText: typeof item.existingText === "string" ? item.existingText.trim().slice(0, 700) : "" })) : [];
         return json({ suggestions }, 200);
       } catch (error) {
-        return json({ error: "Non è stato possibile analizzare la conversazione.", detail: String(error?.message || error).slice(0, 500) }, 502);
+        return aiFailure(error, "Non è stato possibile analizzare la conversazione.", "memory_workers_ai");
       }
     }
 
