@@ -374,6 +374,48 @@ export default {
     try { body = JSON.parse(rawBody); }
     catch { return json({ error: "Corpo JSON non valido." }, 400); }
 
+    if (body.action === "suggest_memories") {
+      const history = [];
+      let historyChars = 0;
+      if (Array.isArray(body.history)) {
+        for (const item of body.history.slice(-8)) {
+          const role = item?.role === "assistant" ? "assistant" : item?.role === "user" ? "user" : null;
+          const content = typeof item?.content === "string" ? item.content.trim() : "";
+          if (!role || !content || historyChars >= MAX_HISTORY_CHARS) continue;
+          const clipped = content.slice(0, Math.min(2500, MAX_HISTORY_CHARS - historyChars));
+          history.push({ role, content: clipped });
+          historyChars += clipped.length;
+        }
+      }
+      if (!history.some(item => item.role === "user")) return json({ error: "Non ci sono messaggi dell'utente da analizzare." }, 400);
+      try {
+        const extractionPrompt = `Analizza la conversazione fornita e individua soltanto informazioni personali stabili o utili nel tempo che l'utente ha dichiarato esplicitamente. Non dedurre tratti, diagnosi, dati sensibili o supposizioni. Escludi dettagli momentanei, domande generiche e informazioni già ripetute. Restituisci esclusivamente JSON valido nella forma {"suggestions":[{"category":"...","text":"..."}]}. Categorie ammesse: identita, personalita, interessi, obiettivi_breve, obiettivi_lungo, routine, relazioni, progetti, studio, progressi, difficolta, comunicazione, decisioni, verificare. Massimo 5 proposte, testo breve e fedele alle parole dell'utente. Se non ci sono informazioni adatte, restituisci {"suggestions":[]}.`;
+        const result = await env.AI.run(MODEL, {
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: extractionPrompt },
+            ...history,
+            { role: "user", content: "Individua eventuali ricordi candidati in questa conversazione." }
+          ],
+          max_tokens: 1200,
+          temperature: 0.1,
+          chat_template_kwargs: { enable_thinking: false }
+        });
+        const raw = extractReply(result);
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+        if (start < 0 || end <= start) return json({ error: "Il modello non ha restituito proposte in formato JSON." }, 502);
+        const parsed = JSON.parse(raw.slice(start, end + 1));
+        const allowed = new Set(["identita","personalita","interessi","obiettivi_breve","obiettivi_lungo","routine","relazioni","progetti","studio","progressi","difficolta","comunicazione","decisioni","verificare"]);
+        const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 5).filter(item =>
+          item && allowed.has(item.category) && typeof item.text === "string" && item.text.trim()
+        ).map(item => ({ category: item.category, text: item.text.trim().slice(0, 700) })) : [];
+        return json({ suggestions }, 200);
+      } catch (error) {
+        return json({ error: "Non è stato possibile analizzare la conversazione.", detail: String(error?.message || error).slice(0, 500) }, 502);
+      }
+    }
+
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const memory = typeof body.memory === "string"
       ? body.memory.slice(0, MAX_MEMORY_CHARS)
