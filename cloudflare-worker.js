@@ -95,6 +95,7 @@ export default {
       }, 200);
     }
     if (request.method !== "POST") return json({ error: "Metodo non consentito. Usa POST." }, 405);
+    if (new URL(request.url).searchParams.get("ping") === "1") return json({ status: "ok", stage: "post", message: "La richiesta POST raggiunge il Worker." }, 200);
     if (!env.AI || typeof env.AI.run !== "function") {
       return json({ error: "Binding Workers AI non configurato. Aggiungi il binding AI." }, 503);
     }
