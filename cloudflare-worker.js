@@ -10,6 +10,9 @@ const ALLOWED_ORIGIN = "*";
 const MODEL = "@cf/zai-org/glm-4.7-flash";
 const MAX_MESSAGE_CHARS = 12000;
 const MAX_MEMORY_CHARS = 6000;
+const MAX_HISTORY_MESSAGES = 8;
+const MAX_HISTORY_CHARS = 16000;
+const MAX_BODY_CHARS = 50000;
 
 const SYSTEM_PROMPT = `Sei The Oracle, l'assistente personale del Witch's Daily Grimoire: un'intelligenza versatile, colta, attenta e affidabile. La tua identità ha un'estetica simbolica lunare e un tono suggestivo ma sobrio: non recitare una parte, non parlare come un personaggio fantasy e non trasformare ogni argomento in esoterismo.
 
@@ -71,6 +74,129 @@ function extractReply(result) {
   return "";
 }
 
+async function streamChat(env, messages, maxTokens = 1536) {
+  let upstream;
+  try {
+    upstream = await env.AI.run(MODEL, {
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.2,
+      chat_template_kwargs: { enable_thinking: false },
+      stream: true,
+    });
+  } catch (error) {
+    return json({
+      error: "Workers AI non è riuscito ad avviare la generazione.",
+      stage: "workers_ai_stream_start",
+      detail: String(error?.message || error).slice(0, 1000),
+    }, 502);
+  }
+
+  if (!upstream || typeof upstream.getReader !== "function") {
+    return json({
+      error: "Workers AI non ha restituito uno stream leggibile.",
+      stage: "workers_ai_stream_format",
+    }, 502);
+  }
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  let upstreamReader;
+  let cancelled = false;
+  const body = new ReadableStream({
+    async start(controller) {
+      upstreamReader = upstream.getReader();
+      let buffer = "";
+      let sentCharacters = 0;
+      let pendingRead = upstreamReader.read();
+
+      const emit = (value) => {
+        if (!cancelled && value) {
+          controller.enqueue(encoder.encode("data: " + JSON.stringify({ text: value }) + "\n\n"));
+          sentCharacters += value.length;
+        }
+      };
+
+      const processFrame = (frame) => {
+        const data = frame.split("\n")
+          .filter(line => line.startsWith("data:"))
+          .map(line => line.slice(5).replace(/^ /, ""))
+          .join("\n")
+          .trim();
+        if (!data || data === "[DONE]") return;
+        let parsed;
+        try { parsed = JSON.parse(data); } catch { return; }
+        if (typeof parsed?.error === "string" && parsed.error) {
+          throw new Error(parsed.error);
+        }
+        const delta = parsed?.choices?.[0]?.delta;
+        if (typeof delta?.content === "string") emit(delta.content);
+        else if (Array.isArray(delta?.content)) {
+          for (const part of delta.content) if (typeof part?.text === "string") emit(part.text);
+        } else if (typeof parsed?.response === "string") emit(parsed.response);
+      };
+
+      try {
+        while (!cancelled) {
+          let timer;
+          const next = await Promise.race([
+            pendingRead.then(value => ({ value })),
+            new Promise(resolve => { timer = setTimeout(() => resolve({ heartbeat: true }), 12000); }),
+          ]);
+          if (next.heartbeat) {
+            if (!cancelled) controller.enqueue(encoder.encode(": keep-alive\n\n"));
+            continue;
+          }
+          clearTimeout(timer);
+          const { done, value } = next.value;
+          if (done) break;
+          pendingRead = upstreamReader.read();
+          buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+          let boundary;
+          while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+            const frame = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+            processFrame(frame);
+          }
+        }
+        buffer += decoder.decode();
+        if (buffer.trim()) processFrame(buffer);
+        if (!cancelled) {
+          if (!sentCharacters) {
+            controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: "Il modello non ha restituito testo." }) + "\n\n"));
+          }
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+      } catch (error) {
+        if (!cancelled) {
+          controller.enqueue(encoder.encode("data: " + JSON.stringify({ error: String(error?.message || error).slice(0, 800) }) + "\n\n"));
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+      } finally {
+        try { upstreamReader.releaseLock(); } catch {}
+      }
+    },
+    async cancel(reason) {
+      cancelled = true;
+      try { await upstreamReader?.cancel(reason); } catch {}
+    },
+  });
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+      "Vary": "Origin",
+      "X-Content-Type-Options": "nosniff",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -85,6 +211,13 @@ export default {
       });
     }
     if (request.method === "GET") {
+      if (new URL(request.url).searchParams.get("test") === "stream") {
+        if (!env.AI || typeof env.AI.run !== "function") return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
+        return streamChat(env, [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: "Rispondi in italiano con una sola frase breve: conferma che lo streaming funziona." }
+        ], 96);
+      }
       if (new URL(request.url).searchParams.get("test") === "chat") {
         if (!env.AI || typeof env.AI.run !== "function") {
           return json({ status: "error", stage: "binding", error: "Workers AI binding AI non disponibile." }, 503);
@@ -154,10 +287,15 @@ export default {
     }
 
     const contentLength = Number(request.headers.get("Content-Length") || 0);
-    if (contentLength > 25000) return json({ error: "Richiesta troppo grande." }, 413);
+    if (contentLength > MAX_BODY_CHARS) return json({ error: "Richiesta troppo grande." }, 413);
+
+    let rawBody;
+    try { rawBody = await request.text(); }
+    catch { return json({ error: "Impossibile leggere il corpo della richiesta." }, 400); }
+    if (rawBody.length > MAX_BODY_CHARS) return json({ error: "Richiesta troppo grande." }, 413);
 
     let body;
-    try { body = await request.json(); }
+    try { body = JSON.parse(rawBody); }
     catch { return json({ error: "Corpo JSON non valido." }, 400); }
 
     const message = typeof body.message === "string" ? body.message.trim() : "";
@@ -177,25 +315,26 @@ export default {
         memory + "\n\nMessaggio dell'utente:\n" + message
       : message;
 
-    try {
-      const result = await env.AI.run(MODEL, {
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userContent },
-        ],
-        max_tokens: 1024,
-        temperature: 0.2,
-        chat_template_kwargs: { enable_thinking: false },
-      });
-      const reply = extractReply(result);
-      if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale.", stage: "empty_model_reply", finish_reason: result?.choices?.[0]?.finish_reason || null }, 502);
-      return json({ reply }, 200);
-    } catch (error) {
-      return json({
-        error: "Workers AI non ha completato la richiesta.",
-        stage: "workers_ai",
-        detail: String(error?.message || error).slice(0, 1200),
-      }, 502);
+    const history = [];
+    let historyChars = 0;
+    if (Array.isArray(body.history)) {
+      for (const item of body.history.slice(-MAX_HISTORY_MESSAGES)) {
+        const role = item?.role === "assistant" ? "assistant" : item?.role === "user" ? "user" : null;
+        const raw = typeof item?.content === "string" ? item.content : typeof item?.text === "string" ? item.text : "";
+        const content = raw.trim();
+        if (!role || !content || historyChars >= MAX_HISTORY_CHARS) continue;
+        const allowed = Math.min(3000, MAX_HISTORY_CHARS - historyChars);
+        const clipped = content.slice(-allowed);
+        history.push({ role, content: clipped });
+        historyChars += clipped.length;
+      }
     }
+
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...history,
+      { role: "user", content: userContent },
+    ];
+    return streamChat(env, messages, 2048);
   },
 };
