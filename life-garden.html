@@ -10,12 +10,14 @@
 </head>
 <body><main>
 <header class="hero"><div class="kicker">✦ strumenti concreti per la vita reale ✦</div><h1>Il Giardino della Vita</h1><div class="sub">Uno spazio per organizzarti, prenderti cura di te e far crescere ciò che ami.</div><div class="quote">☽ ✧ ☾</div><a href="index.html">← Torna al Grimorio</a></header>
-<nav class="tabs" aria-label="Sezioni"><button class="active" data-tab="home">✦ Panoramica</button><button data-tab="calendar">Calendario</button><button data-tab="money">Finanze</button><button data-tab="study">Studio</button><button data-tab="care">Cura di me</button><button data-tab="people">Relazioni</button><button data-tab="skills">Laboratorio</button><button data-tab="review">Riflessioni</button><button data-tab="moon">Luna & cielo</button><button data-tab="library">Biblioteca</button><button data-tab="atelier">Atelier</button><button data-tab="atlas">Atlante personale</button><button data-tab="places">Luoghi & ricordi</button><button data-tab="timeline">La mia storia</button></nav>
+<nav class="tabs" aria-label="Sezioni"><button class="active" data-tab="home">✦ Panoramica</button><button data-tab="lucilla">☾ Agenda di Lucilla</button><button data-tab="calendar">Calendario</button><button data-tab="money">Finanze</button><button data-tab="study">Studio</button><button data-tab="care">Cura di me</button><button data-tab="people">Relazioni</button><button data-tab="skills">Laboratorio</button><button data-tab="review">Riflessioni</button><button data-tab="moon">Luna & cielo</button><button data-tab="library">Biblioteca</button><button data-tab="atelier">Atelier</button><button data-tab="atlas">Atlante personale</button><button data-tab="places">Luoghi & ricordi</button><button data-tab="timeline">La mia storia</button></nav>
 <section id="home" class="page active">
 <p class="intro">Non devi sistemare tutto oggi. Questa pagina serve a togliere un po' di peso dalla testa, non ad aggiungerne.</p>
 <div class="panel"><h2>Il tuo piccolo cruscotto</h2><div class="statgrid"><div class="stat"><span class="muted">Impegni futuri</span><b id="dashEvents">0</b><small>nel calendario</small></div><div class="stat"><span class="muted">Spese questo mese</span><b id="dashSpend">€0</b><small>registrate qui</small></div><div class="stat"><span class="muted">Argomenti in corso</span><b id="dashStudy">0</b><small>nel tuo studio</small></div></div><h3>La cosa più utile da ricordare</h3><textarea id="todayNote" placeholder="Una priorità gentile, un promemoria o qualcosa da non dimenticare..."></textarea><div class="status" id="dashStatus">Salvato solo su questo dispositivo.</div></div>
 <div class="grid"><div class="panel"><h2>Prossimi appuntamenti</h2><div id="upcomingList"></div></div><div class="panel"><h2>Un promemoria gentile</h2><p>Se oggi hai poca energia, riduci la dimensione del compito. Non devi recuperare tutto in una volta. Anche dieci minuti contano, e anche riposare è una scelta legittima.</p><p class="muted">I dati di questa pagina restano nel browser di questo dispositivo. Non vengono inviati a Lucilla o a Cloudflare.</p></div></div>
 </section>
+<section id="lucilla" class="page"><p class="intro">I programmi che Lucilla prepara per te vengono salvati qui automaticamente, sul tuo dispositivo. Puoi spuntare le attività, cambiare gli orari o eliminare ciò che non ti serve.</p>
+<div class="panel"><div class="row"><h2 style="flex:1">Le mie giornate</h2><button id="refreshLucillaPlans">Aggiorna</button></div><div id="lucillaPlanList"></div><p class="muted">I programmi sono privati e locali a questo browser. Se cambi dispositivo o cancelli i dati del sito, esporta prima un backup.</p></div></section>
 <section id="calendar" class="page"><p class="intro">Appuntamenti, scadenze, eventi e cose da ricordare. Puoi aggiungere solo ciò che ti serve.</p>
 <div class="panel"><h2>Nuovo impegno</h2><div class="grid"><input id="evTitle" placeholder="Titolo"><input id="evDate" type="date"><input id="evTime" type="time"><select id="evType"><option>Personale</option><option>Studio</option><option>Salute e appuntamenti</option><option>Casa</option><option>Relazioni</option><option>Scadenza</option><option>Altro</option></select></div><div class="field"><textarea id="evNotes" placeholder="Indirizzo, cosa portare, dettagli..."></textarea></div><button class="primary" id="addEvent">Aggiungi al calendario</button></div>
 <div class="panel"><div class="row"><h2 style="flex:1">I tuoi impegni</h2><select id="eventFilter" style="max-width:190px"><option value="future">Da oggi in poi</option><option value="all">Tutti</option><option value="past">Passati</option></select></div><div id="eventList"></div></div></section>
@@ -96,7 +98,55 @@ $('addPlace').onclick=()=>{const name=$('placeName').value.trim();if(!name)retur
 function renderTimeline(){const root=$('timelineList');root.innerHTML='';if(!state.timeline.length)root.append(node('p','empty','La tua storia comincia dai momenti che scegli di conservare.'));state.timeline.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{const e=node('article','entry'),h=node('div','entryhead');h.append(node('strong','',x.title),node('small','',x.date+' · '+x.type));e.append(h);if(x.note)e.append(node('p','',x.note));e.append(actions(()=>state.timeline=state.timeline.filter(y=>y.id!==x.id),()=>{const v=prompt('Modifica ricordo',x.note);if(v!==null)x.note=v;save();renderAll()}));root.append(e)})}
 $('addTimeline').onclick=()=>{const title=$('timeTitle').value.trim();if(!title)return;state.timeline.push({id:Date.now(),title,date:$('timeDate').value||today(),type:$('timeType').value,note:$('timeNote').value.trim()});['timeTitle','timeDate','timeNote'].forEach(id=>$(id).value='');save();renderAll()};
 
-function renderAll(){renderDashboard();renderEvents();renderMoney();renderSavings();renderStudies();renderCare();renderPeople();renderSkills();renderReviews();renderMoon();renderLibrary();renderAtelier();renderAtlas();renderPlaces();renderTimeline()}
+const LUCILLA_PLANS_KEY='lucillaDailyPlansV1';
+function readLucillaPlans(){try{const value=JSON.parse(localStorage.getItem(LUCILLA_PLANS_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return []}}
+function writeLucillaPlans(plans){localStorage.setItem(LUCILLA_PLANS_KEY,JSON.stringify(plans));renderLucillaPlans()}
+function renderLucillaPlans(){
+const root=$('lucillaPlanList');if(!root)return;root.innerHTML='';
+const plans=readLucillaPlans().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+if(!plans.length){root.append(node('p','empty','Lucilla non ha ancora salvato programmi. Quando le chiederai di organizzare una giornata, comparirà qui automaticamente.'));return}
+plans.forEach(plan=>{
+const card=node('article','entry'),head=node('div','entryhead');
+head.append(node('strong','',plan.title||'La mia giornata'),node('small','',plan.date?new Date(plan.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'Data non indicata'));
+card.append(head);if(plan.summary)card.append(node('p','muted',plan.summary));
+const tasks=Array.isArray(plan.items)?plan.items:[];
+tasks.forEach(item=>{
+const line=node('div','entry lucilla-task'),label=node('label','lucilla-task-label');
+const check=node('input','check');check.type='checkbox';check.checked=!!item.completed;check.dataset.planDate=plan.date;check.dataset.itemId=item.id;
+const details=node('span','',((item.time||'')+(item.time?' · ':'')+item.title+(item.duration?' · '+item.duration+' min':'')));
+if(item.completed)details.style.textDecoration='line-through';
+label.append(check,details);line.append(label);
+if(item.priority==='essenziale')line.append(node('small','muted','Essenziale'));
+if(item.notes)line.append(node('p','muted',item.notes));
+const actions=node('div','entryactions');
+const edit=node('button','','Modifica');edit.dataset.action='edit';edit.dataset.planDate=plan.date;edit.dataset.itemId=item.id;
+const remove=node('button','danger','Elimina');remove.dataset.action='delete-item';remove.dataset.planDate=plan.date;remove.dataset.itemId=item.id;
+actions.append(edit,remove);line.append(actions);card.append(line);
+});
+const actions=node('div','entryactions'),removePlan=node('button','danger','Elimina giornata');removePlan.dataset.action='delete-plan';removePlan.dataset.planDate=plan.date;actions.append(removePlan);card.append(actions);root.append(card);
+});
+root.onchange=e=>{
+const check=e.target;if(!check.matches('input[type="checkbox"][data-item-id]'))return;
+const plans=readLucillaPlans(),plan=plans.find(x=>x.date===check.dataset.planDate),item=plan?.items?.find(x=>x.id===check.dataset.itemId);
+if(item){item.completed=check.checked;localStorage.setItem(LUCILLA_PLANS_KEY,JSON.stringify(plans));renderLucillaPlans()}
+};
+root.onclick=e=>{
+const button=e.target.closest('button[data-action]');if(!button)return;
+const plans=readLucillaPlans(),plan=plans.find(x=>x.date===button.dataset.planDate);if(!plan)return;
+if(button.dataset.action==='delete-plan'){if(!confirm('Eliminare questo programma dal dispositivo?'))return;localStorage.setItem(LUCILLA_PLANS_KEY,JSON.stringify(plans.filter(x=>x.date!==plan.date)));renderLucillaPlans();return}
+const item=plan.items?.find(x=>x.id===button.dataset.itemId);if(!item)return;
+if(button.dataset.action==='delete-item'){if(!confirm('Eliminare questa attività?'))return;plan.items=plan.items.filter(x=>x.id!==item.id)}
+if(button.dataset.action==='edit'){
+const title=prompt('Modifica attività',item.title);if(title===null)return;if(!title.trim()){alert('Il titolo non può essere vuoto.');return}
+const time=prompt('Orario (HH:MM), lascia vuoto se non serve',item.time||'');if(time===null)return;
+if(time.trim()&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time.trim())){alert('Inserisci un orario valido, per esempio 14:30.');return}
+item.title=title.trim();item.time=time.trim();
+}
+localStorage.setItem(LUCILLA_PLANS_KEY,JSON.stringify(plans));renderLucillaPlans();
+};
+}
+$('refreshLucillaPlans').onclick=renderLucillaPlans;
+function renderAll(){renderLucillaPlans();renderDashboard();renderEvents();renderMoney();renderSavings();renderStudies();renderCare();renderPeople();renderSkills();renderReviews();renderMoon();renderLibrary();renderAtelier();renderAtlas();renderPlaces();renderTimeline()}
 $('exportData').onclick=()=>{const blob=new Blob([JSON.stringify({format:'witch-garden-life-v1',exportedAt:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='Witch-Garden-Life-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $('importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const v=JSON.parse(r.result);if(v.format!=='witch-garden-life-v1')throw Error();if(!confirm('Unire il backup ai dati già presenti?'))return;for(const k of ['events','money','studies','careHabits','people','skills','practices','reviews','moonNotes','library','artProjects','places','timeline'])if(Array.isArray(v[k]))state[k]=[...v[k],...state[k]];for(const k of ['careNotes','talkPrep','todayNote'])if(typeof v[k]==='string'&&v[k])state[k]=v[k];if(v.atlas&&typeof v.atlas==='object')state.atlas={...state.atlas,...v.atlas};if(v.savings&&typeof v.savings==='object')state.savings=v.savings;save();renderAll();}catch{alert('Il file non è un backup valido di questa pagina.')}finally{e.target.value=''}};r.readAsText(f)};
 $('clearData').onclick=()=>{if(confirm('Cancellare tutti i dati salvati in Il Giardino della Vita su questo dispositivo? Prima esporta un backup se vuoi conservarli.')){state={...empty,events:[],money:[],studies:[],careHabits:[],people:[],skills:[],practices:[],reviews:[],savings:{name:'',target:'',current:''}};localStorage.removeItem(KEY);$('todayNote').value='';$('careNotes').value='';$('talkPrep').value='';renderAtlas();renderAll();$('saveStatus').textContent='Dati di questa pagina cancellati.'}};
