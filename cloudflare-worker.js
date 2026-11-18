@@ -136,9 +136,11 @@ export default {
       const reply = extractReply(result);
       if (!reply) return json({ error: "Il modello è stato raggiunto ma non ha restituito testo finale. Riprova tra poco." }, 502);
       return json({ reply }, 200);
-    } catch {
+    } catch (error) {
       return json({
-        error: "Il servizio AI non è riuscito a completare la richiesta. Potrebbe essere temporaneamente non disponibile o aver raggiunto la quota gratuita giornaliera.",
+        error: "Workers AI non ha completato la richiesta.",
+        stage: "workers_ai",
+        detail: String(error?.message || error).slice(0, 1200),
       }, 502);
     }
   },
