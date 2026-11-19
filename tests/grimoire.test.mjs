@@ -44,7 +44,7 @@ test("l'aggiornamento di un piano conserva le attività e cambia solo quelle ric
   const start = oraclePage.indexOf("function saveDailyPlanFromReply");
   const end = oraclePage.indexOf("async function send()", start);
   assert.ok(start >= 0 && end > start, "daily plan persistence function not found");
-  const source = oraclePage.slice(start, end) + "\\nglobalThis.saveDailyPlanFromReply = saveDailyPlanFromReply;";
+  const source = oraclePage.slice(start, end) + "\nglobalThis.saveDailyPlanFromReply = saveDailyPlanFromReply;";
   const store = new Map();
   let id = 0;
   const context = vm.createContext({
@@ -63,7 +63,7 @@ test("l'aggiornamento di un piano conserva le attività e cambia solo quelle ric
   const wakeId = initial.items.find(x => x.title === "Sveglia").id;
   context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00"), item("Passeggiata", "17:00")]), "Sposta il disegno alle 12 e aggiungi una passeggiata");
   let saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
-  assert.deepEqual(saved.items.map(x => x.title).sort(), ["Colazione", "Disegno", "Passeggiata", "Sveglia"].sort());
+  assert.deepEqual(Array.from(saved.items, x => x.title).sort(), ["Colazione", "Disegno", "Passeggiata", "Sveglia"].sort());
   assert.equal(saved.items.find(x => x.title === "Disegno").time, "12:00");
   assert.equal(saved.items.find(x => x.title === "Sveglia").id, wakeId);
   context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00")], { mode: "replace" }), "Rifai tutto il programma da capo");
