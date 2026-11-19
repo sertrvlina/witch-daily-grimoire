@@ -187,7 +187,25 @@ if(!items.length)throw new Error('Il piano non contiene attività valide');
 const plan={date:parsed.date,title:typeof parsed.title==='string'&&parsed.title.trim()?parsed.title.trim().slice(0,120):'La mia giornata',summary:typeof parsed.summary==='string'?parsed.summary.slice(0,600):'',items,updatedAt:new Date().toISOString(),source:'Lucilla'};
 const key='lucillaDailyPlansV1';let plans=[];try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))plans=saved}catch{}
 const index=plans.findIndex(x=>x&&x.date===plan.date);
-if(index>=0){const old=plans[index];plan.items=items.map((item,i)=>{const previous=old.items?.find(x=>x.time===item.time&&x.title===item.title);return previous?{...item,id:previous.id,completed:!!previous.completed}:item});plans[index]=plan}else plans.push(plan);
+if(index>=0){
+const old=plans[index],oldItems=Array.isArray(old.items)?old.items:[];
+const normalizeTitle=value=>String(value||'').normalize('NFKC').trim().toLocaleLowerCase('it');
+const merged=oldItems.map(item=>({...item}));
+for(const item of items){
+const matchIndex=merged.findIndex(previous=>normalizeTitle(previous.title)===normalizeTitle(item.title));
+if(matchIndex>=0){
+const previous=merged[matchIndex];
+merged[matchIndex]={...item,id:previous.id||item.id,completed:!!previous.completed};
+}else merged.push(item);
+}
+const removals=Array.isArray(parsed.remove)?parsed.remove.filter(x=>typeof x==='string').map(normalizeTitle):[];
+plan.items=merged.filter(item=>!removals.includes(normalizeTitle(item.title)));
+plan.items.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+plans[index]=plan;
+}else{
+plan.items.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+plans.push(plan);
+}
 plans.sort((a,b)=>b.date.localeCompare(a.date));localStorage.setItem(key,JSON.stringify(plans.slice(0,90)));
 return {text:rawText.replace(match[0],'').trim(),plan};
 }catch(error){console.warn('Piano di Lucilla non salvato:',error);return {text:rawText.replace(match[0],'').trim(),plan:null}}
