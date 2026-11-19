@@ -124,7 +124,7 @@ card.append(category,field,actions);actions.append(approve,dismiss);root.append(
 }
 async function analyzeConversation(){
 const button=$('analyzeMemory'),status=$('memoryStatus');
-if(!$('endpoint').value.trim()||!$('cloudConsent').checked){status.textContent='Per analizzare la conversazione devi configurare il backend e autorizzare l’invio.';return}
+if(!$('endpoint').value.trim()||!$('cloudConsent').checked){status.textContent='Per analizzare la conversazione, autorizza l’invio AI nella sezione «Connessione AI». Il Worker è già configurato.';return}
 const history=chat.slice(-8).filter(x=>x&&(x.role==='user'||x.role==='assistant')&&typeof x.text==='string').map(x=>({role:x.role,content:x.text}));
 if(!history.some(x=>x.role==='user')){status.textContent='Non ci sono ancora messaggi sufficienti da analizzare.';return}
 button.disabled=true;status.textContent='Lucilla sta individuando eventuali ricordi utili…';
@@ -160,7 +160,7 @@ $('profileStatus').textContent=personalProfile?'Profilo salvato in questo browse
 
 chat=safeParse(KEYS.chat,[]);memory=safeParse(KEYS.memory,[]).map(normalizeMemory).filter(Boolean);progressEntries=safeParse(KEYS.progress,[]).filter(x=>x&&typeof x.title==='string').map(x=>({id:x.id||makeId(),title:x.title.slice(0,120),date:x.date||'',category:x.category||'altro',status:x.status||'idea',notes:typeof x.notes==='string'?x.notes.slice(0,1800):'',created:x.created||new Date().toISOString(),updated:x.updated||null}));persist();renderChat();renderMemory();renderProgress();$('personalProfile').value=personalProfile;$('progressDate').value=new Date().toISOString().slice(0,10);
 $('endpoint').value=DEFAULT_ENDPOINT;localStorage.setItem(KEYS.endpoint,DEFAULT_ENDPOINT);$('cloudConsent').checked=localStorage.getItem(KEYS.cloud)==='true';$('memoryConsent').checked=localStorage.getItem(KEYS.include)==='true';
-function updateMode(){const configured=!!$('endpoint').value.trim();const consent=$('cloudConsent').checked;const connected=configured&&consent;$('connectionStatus').textContent=connected?'Worker configurato · invio AI autorizzato':configured?'Worker configurato · in attesa del tuo consenso':'Indirizzo Worker mancante · modalità locale';$('modeHint').textContent=connected?'Invio al backend Cloudflare autorizzato':configured?'Modalità locale · attiva il consenso per usare l’AI':'Modalità locale · nessun messaggio viene inviato'}
+function updateMode(){const configured=!!$('endpoint').value.trim();const consent=$('cloudConsent').checked;const connected=configured&&consent;$('connectionStatus').textContent=connected?'Worker configurato · invio AI autorizzato':configured?'Worker configurato · in attesa del tuo consenso':'Indirizzo Worker mancante · modalità locale';$('modeHint').textContent=connected?'Invio al backend Cloudflare autorizzato':configured?'Worker già configurato · attiva il consenso per usare l’AI':'Modalità locale · nessun messaggio viene inviato'}
 $('endpoint').addEventListener('change',()=>{localStorage.setItem(KEYS.endpoint,$('endpoint').value.trim());updateMode()});
 $('cloudConsent').onchange=()=>{localStorage.setItem(KEYS.cloud,String($('cloudConsent').checked));updateMode()};
 $('memoryConsent').onchange=()=>localStorage.setItem(KEYS.include,String($('memoryConsent').checked));
@@ -203,7 +203,7 @@ $('message').value='';
 addBubble('user',text);
 const endpoint=$('endpoint').value.trim();
 if(!endpoint||!$('cloudConsent').checked){
-addBubble('assistant','Ho conservato il tuo messaggio in questa pagina. Per ricevere una risposta AI, configura il Worker Cloudflare e attiva il consenso all’invio.');
+addBubble('assistant','Ho conservato il tuo messaggio su questo dispositivo. Il Worker è già configurato; per ricevere una risposta AI devi autorizzare l’invio dei messaggi nella sezione «Connessione AI». Le note personali e gli archivi restano esclusi finché non li autorizzi separatamente.');
 return;
 }
 $('send').disabled=true;
