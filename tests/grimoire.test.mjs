@@ -25,6 +25,10 @@ test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   assert.ok(!oraclePage.includes("configura il Worker Cloudflare"), "obsolete Oracle setup prompt remains");
   assert.ok(oraclePage.includes("autorizzare l’invio") || oraclePage.includes("autorizza l’invio"), "Oracle consent guidance missing");
   const gardenPage = await read("life-garden.html");
+  assert.ok(oraclePage.includes("dailyPlans:safeParse('lucillaDailyPlansV1',[])"), "Oracle backup must include Lucilla daily plans");
+  assert.ok(oraclePage.includes("v.dailyPlans"), "Oracle backup import must restore daily plans");
+  assert.ok(gardenPage.includes("dailyPlans:readLucillaPlans()"), "Garden backup must include Lucilla daily plans");
+  assert.ok(gardenPage.includes('id="addLucillaTask"'), "Garden agenda must allow manual activity entry");
   for (const feature of ["id=\"calendar\"", "id=\"money\"", "id=\"study\"", "id=\"care\"", "id=\"people\"", "id=\"skills\"", "id=\"review\"", "id=\"moon\"", "id=\"library\"", "id=\"atelier\"", "id=\"atlas\"", "id=\"places\"", "id=\"timeline\"", "witchGardenLifeV1", "phaseInfo", "witch-garden-life-v1"]) assert.ok(gardenPage.includes(feature), "life garden missing " + feature);
   const supportPage = await read("bpd-support.html");
   for (const feature of ["id=\"distress\"", "saveSenses", "saveUrge", "piano personale", "DEAR MAN", "id=\"refuge\"", "id=\"lowday\"", "id=\"identity\"", "id=\"letters\"", "id=\"resources\"", "saveLetter", "renderLetters"]) {
