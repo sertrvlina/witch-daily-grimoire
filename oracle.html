@@ -173,14 +173,14 @@ else{memory.unshift({id:makeId(),category:$('memoryCategory').value,text:t,creat
 resetMemoryEditor();persist();renderMemory();
 };
 function saveDailyPlanFromReply(rawText,requestText=''){
-const match=rawText.match(/\\[\\[LUCILLA_DAILY_PLAN\\]\\]([\\s\\S]*?)\\[\\[\\/LUCILLA_DAILY_PLAN\\]\\]/);
+const match=rawText.match(/\[\[LUCILLA_DAILY_PLAN\]\]([\s\S]*?)\[\[\/LUCILLA_DAILY_PLAN\]\]/);
 if(!match)return {text:rawText,plan:null};
 try{
 const parsed=JSON.parse(match[1].trim());
-if(!parsed||typeof parsed.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(parsed.date)||!Array.isArray(parsed.items)||parsed.items.length>30)throw new Error('Piano non valido');
+if(!parsed||typeof parsed.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(parsed.date)||!Array.isArray(parsed.items)||parsed.items.length>30)throw new Error('Piano non valido');
 const items=parsed.items.map(item=>{
 if(!item||typeof item.title!=='string'||!item.title.trim())return null;
-const time=typeof item.time==='string'&&/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(item.time)?item.time:'';
+const time=typeof item.time==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item.time)?item.time:'';
 return {id:makeId(),time,title:item.title.trim().slice(0,180),duration:Number.isFinite(Number(item.duration))?Math.max(0,Math.min(1440,Number(item.duration))):0,category:typeof item.category==='string'?item.category.slice(0,40):'altro',notes:typeof item.notes==='string'?item.notes.slice(0,500):'',priority:item.priority==='essenziale'?'essenziale':'facoltativa',completed:false};
 }).filter(Boolean);
 if(!items.length)throw new Error('Il piano non contiene attività valide');
@@ -189,9 +189,9 @@ const key='lucillaDailyPlansV1';let plans=[];try{const saved=JSON.parse(localSto
 const index=plans.findIndex(x=>x&&x.date===plan.date);
 if(index>=0){
 const old=plans[index],oldItems=Array.isArray(old.items)?old.items:[];
-const normalizeTitle=value=>String(value||'').normalize('NFKC').trim().replace(/\\s+/g,' ').toLocaleLowerCase('it');
+const normalizeTitle=value=>String(value||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('it');
 const request=normalizeTitle(requestText);
-const explicitReplace=/(?:rifai|riscrivi|sostituisci|ricrea|ricomincia|riformula|azzera)\\b.{0,45}\\b(?:tutto|tutta|intero|intera|da capo|completamente|interamente)\\b|\\b(?:da capo|interamente da zero|completamente da zero)\\b/i.test(request);
+const explicitReplace=/(?:rifai|riscrivi|sostituisci|ricrea|ricomincia|riformula|azzera)\b.{0,45}\b(?:tutto|tutta|intero|intera|da capo|completamente|interamente)\b|\b(?:da capo|interamente da zero|completamente da zero)\b/i.test(request);
 const replaceRequested=parsed.mode==='replace'&&explicitReplace;
 if(replaceRequested){
 plan.items=items;
@@ -204,7 +204,7 @@ const previous=merged[matchIndex];
 merged[matchIndex]={...item,id:previous.id||item.id,completed:!!previous.completed};
 }else merged.push(item);
 }
-const removeVerb=/(?:\\b elimina\\b|\\b eliminare\\b|\\b rimuovi\\b|\\b rimuovere\\b|\\b togli\\b|\\b togliere\\b|\\b cancella\\b|\\b cancellare\\b|\\b non voglio più\\b|\\b non mettere più\\b)/i.test(' '+request+' ');
+const removeVerb=/(?:\b elimina\b|\b eliminare\b|\b rimuovi\b|\b rimuovere\b|\b togli\b|\b togliere\b|\b cancella\b|\b cancellare\b|\b non voglio più\b|\b non mettere più\b)/i.test(' '+request+' ');
 const requestedRemovals=Array.isArray(parsed.remove)?parsed.remove.filter(x=>typeof x==='string').map(normalizeTitle):[];
 const removals=removeVerb?requestedRemovals.filter(title=>title&&request.includes(title)):[];
 plan.items=merged.filter(item=>!removals.includes(normalizeTitle(item.title)));
