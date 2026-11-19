@@ -39,6 +39,38 @@ test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   }
 });
 
+test("l'aggiornamento di un piano conserva le attività e cambia solo quelle richieste", async () => {
+  const oraclePage = await read("oracle.html");
+  const start = oraclePage.indexOf("function saveDailyPlanFromReply");
+  const end = oraclePage.indexOf("async function send()", start);
+  assert.ok(start >= 0 && end > start, "daily plan persistence function not found");
+  const source = oraclePage.slice(start, end) + "\\nglobalThis.saveDailyPlanFromReply = saveDailyPlanFromReply;";
+  const store = new Map();
+  let id = 0;
+  const context = vm.createContext({
+    localStorage: { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, value) },
+    makeId: () => "test-" + (++id),
+    Date,
+    console,
+  });
+  new vm.Script(source).runInContext(context);
+  const emit = (items, extra = {}) => "[[LUCILLA_DAILY_PLAN]]" + JSON.stringify({
+    date: "2026-11-20", title: "Domani", items, ...extra
+  }) + "[[/LUCILLA_DAILY_PLAN]]";
+  const item = (title, time) => ({ title, time, duration: 30, category: "benessere" });
+  context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Colazione", "09:15"), item("Disegno", "11:00")]), "Organizza la giornata");
+  const initial = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
+  const wakeId = initial.items.find(x => x.title === "Sveglia").id;
+  context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00"), item("Passeggiata", "17:00")]), "Sposta il disegno alle 12 e aggiungi una passeggiata");
+  let saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
+  assert.deepEqual(saved.items.map(x => x.title).sort(), ["Colazione", "Disegno", "Passeggiata", "Sveglia"].sort());
+  assert.equal(saved.items.find(x => x.title === "Disegno").time, "12:00");
+  assert.equal(saved.items.find(x => x.title === "Sveglia").id, wakeId);
+  context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00")], { mode: "replace" }), "Rifai tutto il programma da capo");
+  saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
+  assert.deepEqual(saved.items.map(x => x.title).sort(), ["Disegno", "Sveglia"].sort());
+});
+
 test("health check non esegue inferenze e non consuma Neurons", async () => {
   let calls = 0;
   const env = { AI: { run: async () => { calls++; return {}; } } };
