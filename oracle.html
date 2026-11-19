@@ -191,7 +191,7 @@ if(index>=0){
 const old=plans[index],oldItems=Array.isArray(old.items)?old.items:[];
 const normalizeTitle=value=>String(value||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('it');
 const request=normalizeTitle(requestText);
-const explicitReplace=/(?:rifai|riscrivi|sostituisci|ricrea|ricomincia|riformula|azzera)\b.{0,45}\b(?:tutto|tutta|intero|intera|da capo|completamente|interamente)\b|\b(?:da capo|interamente da zero|completamente da zero)\b/i.test(request);
+const explicitReplace=!/\bnon\s+(?:rifare|riscrivere|sostituire|ricreare|ricominciare|riformulare|azzerare|rifai|riscrivi|sostituisci|ricrea|ricomincia|riformula|azzera)\b/i.test(request)&&/(?:rifai|riscrivi|sostituisci|ricrea|ricomincia|riformula|azzera)\b.{0,45}\b(?:tutto|tutta|intero|intera|da capo|completamente|interamente)\b|\b(?:da capo|interamente da zero|completamente da zero)\b/i.test(request);
 const replaceRequested=explicitReplace;
 if(replaceRequested){
 plan.items=items;
@@ -204,7 +204,7 @@ const previous=merged[matchIndex];
 merged[matchIndex]={...item,id:previous.id||item.id,completed:!!previous.completed};
 }else merged.push(item);
 }
-const removeVerb=/(?:\belimina\b|\beliminare\b|\brimuovi\b|\brimuovere\b|\btogli\b|\btogliere\b|\bcancella\b|\bcancellare\b|\bnon voglio più\b|\bnon mettere più\b)/i.test(request);
+const negatedRemoval=/\bnon\s+(?:elimina|eliminare|rimuovi|rimuovere|togli|togliere|cancella|cancellare)\b/i.test(request);const removeVerb=!negatedRemoval&&/(?:\belimina\b|\beliminare\b|\brimuovi\b|\brimuovere\b|\btogli\b|\btogliere\b|\bcancella\b|\bcancellare\b|\bnon voglio più\b|\bnon mettere più\b)/i.test(request);
 const requestedRemovals=Array.isArray(parsed.remove)?parsed.remove.filter(x=>typeof x==='string').map(normalizeTitle):[];
 const removals=removeVerb?[...new Set([...requestedRemovals.filter(title=>title&&request.includes(title)),...oldItems.map(item=>normalizeTitle(item.title)).filter(title=>title&&request.includes(title))])]:[];
 plan.items=merged.filter(item=>!removals.includes(normalizeTitle(item.title)));
