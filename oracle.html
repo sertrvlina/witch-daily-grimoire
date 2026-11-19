@@ -204,7 +204,7 @@ const previous=merged[matchIndex];
 merged[matchIndex]={...item,id:previous.id||item.id,completed:!!previous.completed};
 }else merged.push(item);
 }
-const removeVerb=/(?:\b elimina\b|\b eliminare\b|\b rimuovi\b|\b rimuovere\b|\b togli\b|\b togliere\b|\b cancella\b|\b cancellare\b|\b non voglio più\b|\b non mettere più\b)/i.test(' '+request+' ');
+const removeVerb=/(?:\belimina\b|\beliminare\b|\brimuovi\b|\brimuovere\b|\btogli\b|\btogliere\b|\bcancella\b|\bcancellare\b|\bnon voglio più\b|\bnon mettere più\b)/i.test(request);
 const requestedRemovals=Array.isArray(parsed.remove)?parsed.remove.filter(x=>typeof x==='string').map(normalizeTitle):[];
 const removals=removeVerb?requestedRemovals.filter(title=>title&&request.includes(title)):[];
 plan.items=merged.filter(item=>!removals.includes(normalizeTitle(item.title)));
