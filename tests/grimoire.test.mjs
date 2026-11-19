@@ -73,9 +73,15 @@ test("l'aggiornamento di un piano conserva le attività e cambia solo quelle ric
   context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00")], { mode: "replace" }), "Cambia soltanto la sveglia");
   saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
   assert.ok(saved.items.some(x => x.title === "Colazione"), "model-requested replacement must not erase activities without explicit user intent");
+  context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00"), item("Passeggiata", "17:00")], { remove: ["Colazione"] }), "Non eliminare la Colazione");
+  saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
+  assert.ok(saved.items.some(x => x.title === "Colazione"), "negated removal request must preserve the activity");
   context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00"), item("Passeggiata", "17:00")]), "Elimina la Colazione");
   saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
   assert.ok(!saved.items.some(x => x.title === "Colazione"), "an explicitly requested removal must be applied");
+  context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00")]), "Non rifare tutto il programma da capo");
+  saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
+  assert.ok(saved.items.some(x => x.title === "Passeggiata"), "negated replacement request must preserve existing activities");
   context.saveDailyPlanFromReply(emit([item("Sveglia", "09:00"), item("Disegno", "12:00")]), "Rifai tutto il programma da capo");
   saved = JSON.parse(store.get("lucillaDailyPlansV1"))[0];
   assert.deepEqual(saved.items.map(x => x.title).sort(), ["Disegno", "Sveglia"].sort());
