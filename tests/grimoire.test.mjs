@@ -19,6 +19,11 @@ function request(body, origin = ORIGIN) {
 
 test("Worker e pagine hanno JavaScript sintatticamente valido", async () => {
   await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
+  const oraclePage = await read("oracle.html");
+  assert.ok(oraclePage.includes("https://proud-scene-d65athe-oracle.martinabianco2007.workers.dev"), "Oracle Worker endpoint missing");
+  assert.ok(oraclePage.includes("Il Worker è già configurato"), "Oracle must not tell users to configure an already configured Worker");
+  assert.ok(!oraclePage.includes("configura il Worker Cloudflare"), "obsolete Oracle setup prompt remains");
+  assert.ok(oraclePage.includes("autorizzare l’invio") || oraclePage.includes("autorizza l’invio"), "Oracle consent guidance missing");
   const gardenPage = await read("life-garden.html");
   for (const feature of ["id=\"calendar\"", "id=\"money\"", "id=\"study\"", "id=\"care\"", "id=\"people\"", "id=\"skills\"", "id=\"review\"", "id=\"moon\"", "id=\"library\"", "id=\"atelier\"", "id=\"atlas\"", "id=\"places\"", "id=\"timeline\"", "witchGardenLifeV1", "phaseInfo", "witch-garden-life-v1"]) assert.ok(gardenPage.includes(feature), "life garden missing " + feature);
   const supportPage = await read("bpd-support.html");
